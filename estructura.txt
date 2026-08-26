@@ -1,0 +1,96 @@
+/memory-logger-pro/
+│
+├── memory-logger.php       # Archivo principal del plugin. Define constantes, carga los includes y registra hooks.
+├── readme.txt              # Documentación del plugin (No generar de momento)
+│
+├── /assets/                # Recursos estáticos (CSS, JS, imágenes)
+│   ├── admin-script.js     # JavaScript para la administración (interactividad, AJAX, gráficos)
+│   ├── admin-styles.css    # Estilos CSS para la interfaz de administración
+│
+└── /includes/              # Código PHP del plugin
+    │
+    ├── admin-logic.php     # Lógica de la administración: menús, páginas, procesamiento de formularios, etc.
+    ├── ajax-logic.php      # Manejo de peticiones AJAX (pruebas, análisis, limpieza de caché, etc.)
+    ├── core-logic.php      # Funciones principales: monitoreo de CPU, memoria, logs, detección de errores, etc.
+    ├── security-logic.php  # Escaneo de seguridad: detección de plugins vulnerables, obsoletos, etc.
+    ├── utils.php           # Funciones auxiliares: conversión de memoria, sanitización de URLs, etc.
+    │
+    └── /views/             # Vistas (HTML/PHP) para las pestañas de administración
+        ├── tab-dashboard.php   # Vista del Dashboard (pestaña 1)
+        ├── tab-statistics.php  # Vista de Estadísticas (pestaña 2)
+        └── tab-diagnostic.php  # Vista de Diagnóstico y Seguridad (pestaña 3)
+
+
+Propuesta optimizacion:
+1º	Limpieza de Scripts Inline: Mover todo el JS de las vistas a admin-script.js.	Estabilidad	Muy Bajo
+2º	Optimización UX Dashboard: Reordenar bloques (Métricas → Logs → Configuración → Ayuda).	Usabilidad	Bajo
+3º	AJAX en Estadísticas: Hacer que los gráficos cambien de rango sin recargar.	Velocidad	Medio
+4º	Unificación de Utilidades: Centralizar la lógica de colores e iconos en utils.php.	Mantenibilidad	Bajo
+
+Aquí tienes el desglose funcional de cada pestaña de Memory Logger Pro v12.8.0, detallando qué hace cada componente para el usuario final.
+
+### 1. Pestaña: Dashboard (Resumen General)
+Es el centro de mando para ver el estado actual del sistema en tiempo real.
+
+*   **Tarjetas de Métricas en Tiempo Real (Top)**
+    *   **Uso de Memoria:** Muestra la RAM consumida por la petición actual vs el límite de PHP. (e.g., "45 MB / 256 MB").
+    *   **Tiempo de Ejecución:** Cuánto tardó WordPress en generar la página. (e.g., "0.35s").
+    *   **Carga de CPU:** Estimación inteligente del uso de CPU basado en el tiempo de proceso.
+    *   **Consultas SQL:** Número total de queries ejecutadas en la carga actual.
+
+*   **Tabla de Historial de Peticiones**
+    *   **Listado de Eventos:** Muestra las últimas peticiones registradas (Admin, Frontend, AJAX).
+    *   **Columnas Clave:** Fecha, URL, Memoria, Tiempo, SQL, CPU, Status HTTP.
+    *   **Iconos de Alerta:** Calaveras (Error Fatal), Fuego (Memoria Crítica), Tortuga (Lento), etc., para identificar problemas de un vistazo.
+    *   **Filtrado:** Buscador en tiempo real para filtrar por URL o tipo de petición.
+
+*   **Acciones Rápidas**
+    *   **Probar Métricas Ahora:** Fuerza una recarga y medición inmediata para verificar que el logger funciona.
+    *   **Vaciar Registro:** Borra el archivo de logs y resetea las estadísticas.
+    *   **Refrescar Salud:** Recalcula los indicadores de salud del sistema (útil tras cambios en el servidor).
+
+### 2. Pestaña: Estadísticas (Análisis Histórico)
+Para entender tendencias y problemas recurrentes a lo largo del tiempo.
+
+*   **Gráficos Interactivos (Chart.js)**
+    *   **Selector de Rango:** Permite ver los últimos 10, 50, 100 o 500 eventos.
+    *   **Selector de Tipo:** Cambia entre gráficos de líneas (tendencia) o barras (volumen).
+    *   **Memoria vs SQL:** Correlaciona consumo de RAM con número de consultas (detecta plugins pesados en DB).
+    *   **Tiempo vs CPU:** Correlaciona lentitud con carga de procesamiento (detecta código ineficiente).
+
+*   **Distribución de Consumo**
+    *   **Barras de Progreso:** Muestra qué porcentaje de peticiones son "Ligeras" (<50MB), "Normales" o "Pesadas" (>200MB). Ayuda a ver si el sitio es generalmente pesado o solo tiene picos puntuales.
+
+*   **Historial de Picos Peligrosos**
+    *   **Tabla de Riesgo:** Lista específica de las peticiones que superaron los umbrales de seguridad (e.g., >200MB o >5s), con fecha y URL exacta. Esencial para cazar "balas perdidas".
+
+### 3. Pestaña: Diagnóstico & Seguridad (Herramientas Profundas)
+Herramientas bajo demanda para auditar problemas específicos.
+
+*   **Botón Maestro: "Ejecutar Auditoría Global"**
+    *   Lanza todos los escaneos a la vez y genera un **Score Global (0-100)** basado en plugins, DB y errores.
+
+*   **Herramientas Individuales**
+    *   **🔌 Análisis de Plugins:**
+        *   Detecta actualizaciones pendientes (con prioridad Mayor/Menor).
+        *   Avisa de plugins incompatibles con tu versión de PHP/WP.
+        *   Identifica plugins "zombies" (abandonados hace años).
+    *   **🔍 Patrones de Error:**
+        *   Lee `debug.log` o `error_log`.
+        *   Muestra conteo total de Fatals/Warnings.
+        *   **Timeline:** Gráfico de frecuencia de errores (últimos 14 días).
+        *   **Culpables:** Agrupa errores por Plugin/Theme origen.
+    *   **📁 Integridad Core:**
+        *   Verifica permisos de escritura en carpetas críticas (`wp-content`, `uploads`).
+        *   Confirma existencia de archivos vitales (`wp-config.php`, `.htaccess`).
+    *   **🗄️ Base de Datos:**
+        *   Analiza tamaño real y **overhead** (fragmentación).
+        *   Mide el tamaño de **Autoload** (crítico para velocidad de carga).
+        *   Lista las tablas más pesadas y transitorios caducados.
+    *   **🏠 Recomendaciones de Hosting:**
+        *   Analiza PHP (`memory_limit`, `max_execution_time`).
+        *   Verifica extensiones (OPCache, cURL, Imagick).
+        *   Comprueba seguridad SSL y Headers (HSTS).
+
+*   **Exportación**
+    *   **Descargar Reporte:** Genera un archivo (JSON/HTML/TXT) con todo el diagnóstico para enviar a soporte técnico o guardar como auditoría.

@@ -1,0 +1,1021 @@
+/* =========================================================================
+   Memory Logger Pro v12.8.0 - Estilos Administrativos Reorganizados
+   ========================================================================= */
+
+/* Estilos para pestaña Estadísticas */
+.mlp-stats-wrap { color: #1d2327; }
+.mlp-stats-header { margin-bottom: 20px; padding: 12px; background: #f0f7ff; border-radius: 4px; border-left: 4px solid #0073aa; }
+.mlp-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.mlp-stat-card { padding: 15px; background: #fff; border: 1px solid #dcdcde; border-radius: 4px; border-top: 3px solid #ccc; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+.mlp-stat-card .label { font-size: 11px; font-weight: 600; margin-bottom: 8px; color: #646970; text-transform: uppercase; }
+.mlp-stat-card .val { font-size: 24px; font-weight: 700; line-height: 1.2; margin-bottom: 5px; }
+.mlp-stat-card .sub { font-size: 11px; color: #646970; }
+
+.mlp-health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 25px; }
+.mlp-health-card { padding: 15px; background: #fff; border: 1px solid #dcdcde; border-radius: 4px; border-left: 5px solid #ccc; position: relative; }
+.mlp-health-icon { font-size: 20px; margin-bottom: 10px; }
+.mlp-health-title { font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.mlp-health-val { font-size: 20px; font-weight: 700; margin-bottom: 5px; }
+.mlp-health-badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 10px; font-weight: 700; text-transform: uppercase; }
+
+.mlp-method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.mlp-method-card { padding: 12px; background: #f9f9f9; border: 1px solid #dcdcde; border-radius: 4px; border-top: 3px solid #646970; }
+
+.mlp-dist-bar-container { display: flex; align-items: center; gap: 15px; margin-bottom: 10px; }
+.mlp-dist-label { min-width: 80px; font-size: 11px; font-weight: 600; }
+.mlp-dist-bar-bg { flex: 1; height: 22px; background: #f0f0f0; border-radius: 11px; overflow: hidden; position: relative; }
+.mlp-dist-bar-fill { height: 100%; transition: width 0.8s ease-out; }
+.mlp-dist-bar-text { position: absolute; left: 10px; top: 0; height: 100%; display: flex; align-items: center; font-size: 10px; font-weight: 700; color: #fff; text-shadow: 0 1px 1px rgba(0,0,0,0.2); }
+
+.mlp-info-box { background: #f8f9fa; border: 1px solid #dcdcde; padding: 15px; border-radius: 4px; font-size: 12px; line-height: 1.6; margin-bottom: 25px; }
+
+.mlp-chart-container { height: 300px; position: relative; }
+
+/* Estilos para tabla de picos */
+.mlp-peak-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+.mlp-peak-table th, .mlp-peak-table td { padding: 8px; border-bottom: 1px solid #dcdcde; text-align: left; }
+.mlp-peak-table th { background: #f8f9fa; font-weight: 600; }
+
+/* =========================================================================
+   CLASES UTILITARIAS PARA VISTAS (v12.8.0)
+   ========================================================================= */
+
+/* Espaciado y padding */
+.mlp-p-10 { padding: 10px; }
+.mlp-p-12 { padding: 12px; }
+.mlp-p-15 { padding: 15px; }
+.mlp-mb-10 { margin-bottom: 10px; }
+.mlp-mb-15 { margin-bottom: 15px; }
+.mlp-mt-10 { margin-top: 10px; }
+.mlp-mt-15 { margin-top: 15px; }
+
+/* Texto */
+.mlp-text-sm { font-size: 11px; }
+.mlp-text-xs { font-size: 10px; }
+.mlp-text-lg { font-size: 14px; }
+.mlp-text-muted { color: #646970; }
+.mlp-text-white { color: #fff; }
+.mlp-font-bold { font-weight: 600; }
+.mlp-font-bold-700 { font-weight: 700; }
+
+/* Backgrounds */
+.mlp-bg-light { background: #f8f9fa; }
+.mlp-bg-white { background: #fff; }
+.mlp-bg-blue { background: #f0f7ff; }
+
+/* Bordes */
+.mlp-border-radius { border-radius: 4px; }
+.mlp-border-left-green { border-left: 3px solid #00a32a; }
+.mlp-border-left-red { border-left: 3px solid #d63638; }
+.mlp-border-left-orange { border-left: 3px solid #f0b849; }
+.mlp-border-left-blue { border-left: 3px solid #2271b1; }
+
+/* Grid */
+.mlp-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+.mlp-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.mlp-grid-auto { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+
+/* Flex */
+.mlp-flex { display: flex; }
+.mlp-flex-wrap { flex-wrap: wrap; }
+.mlp-flex-between { justify-content: space-between; }
+.mlp-flex-center { align-items: center; }
+.mlp-flex-gap-10 { gap: 10px; }
+.mlp-flex-gap-15 { gap: 15px; }
+
+/* Colores de estado */
+.mlp-color-success { color: #00a32a; }
+.mlp-color-warning { color: #f0b849; }
+.mlp-color-error { color: #d63638; }
+.mlp-color-info { color: #2271b1; }
+
+/* Badges */
+.mlp-badge { display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 9px; font-weight: 700; }
+.mlp-badge-success { background: #e8f5e8; color: #00a32a; }
+.mlp-badge-warning { background: #fff8e1; color: #f0b849; }
+.mlp-badge-error { background: #fff5f5; color: #d63638; }
+
+/* Alertas */
+.mlp-alert { padding: 10px; border-radius: 4px; font-size: 11px; }
+.mlp-alert-info { background: #f0f7ff; border-left: 3px solid #0073aa; }
+.mlp-alert-warning { background: #fff8e1; border-left: 3px solid #f0b849; }
+.mlp-alert-error { background: #fff5f5; border-left: 3px solid #d63638; }
+.mlp-alert-success { background: #e8f5e8; border-left: 3px solid #00a32a; }
+
+/* Tarjetas compactas para métricas */
+.mlp-metric-card { padding: 12px; background: #fff; border: 1px solid #eee; border-radius: 4px; }
+.mlp-metric-card-header { font-size: 11px; font-weight: 600; margin-bottom: 3px; color: #646970; }
+.mlp-metric-card-value { font-size: 20px; font-weight: 700; }
+.mlp-metric-card-sub { font-size: 10px; color: #8c8f94; }
+
+/* Barras de distribución */
+.mlp-dist-bar { display: flex; align-items: center; gap: 15px; }
+.mlp-dist-bar-track { flex: 1; height: 22px; background: #f0f0f0; border-radius: 11px; overflow: hidden; }
+.mlp-dist-bar-fill { height: 100%; transition: width 0.3s; }
+
+/* Indicadores de estado */
+.mlp-status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
+.mlp-status-dot-green { background: #00a32a; }
+.mlp-status-dot-orange { background: #f0b849; }
+.mlp-status-dot-red { background: #d63638; }
+
+/* 1. ESTILOS GENERALES Y LAYOUT */
+.ml-card {
+    background: #ffffff;
+    border: 1px solid #dcdcde;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.04);
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 4px;
+}
+
+.ml-card h2 {
+    margin: 0 0 15px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.ml-card h3 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+/* 2. PANELES DE INFORMACIÓN */
+.hosting-info-panel-mini {
+    background: #f0f7ff;
+    border-left: 3px solid #0073aa;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 4px;
+}
+
+.hosting-info-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    font-size: 12px;
+}
+
+.hosting-mini-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.hosting-mini-label {
+    font-weight: 600;
+    color: #1d2327;
+    margin-bottom: 2px;
+}
+
+.hosting-mini-value {
+    font-weight: 500;
+    color: #646970;
+}
+
+/* Badges de servidor */
+.server-badge {
+    background: #00a32a;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-weight: 600;
+    font-size: 10px;
+    display: inline-block;
+}
+
+.mlp-chart-wrapper {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 15px;
+    margin-bottom: 20px;
+    width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.mlp-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #f0f0f1;
+    padding-bottom: 8px;
+}
+
+.mlp-chart-title {
+    font-size: 13px;
+    font-weight: 700;
+    margin: 0;
+    color: #1d2327;
+}
+
+.mlp-chart-type-btn {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: all 0.2s;
+}
+
+.mlp-chart-type-btn:hover {
+    background: #f6f7f7;
+    border-color: #2271b1;
+}
+
+.mlp-chart-type-btn.active {
+    background: #2271b1;
+    color: #fff;
+    border-color: #2271b1;
+}
+
+.server-apache { background-color: #d63638; }
+.server-nginx { background-color: #00a32a; }
+.server-litespeed { background-color: #2271b1; }
+.server-openlitespeed { background-color: #2271b1; }
+.server-iis { background-color: #f0b849; }
+.server-caddy { background-color: #6f42c1; }
+.server-lighttpd { background-color: #8c8f94; }
+.server-tomcat { background-color: #d63638; }
+
+/* Indicadores de estado */
+.load-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.load-normal { background-color: #00a32a; }
+.load-high { background-color: #f0b849; }
+.load-critical { background-color: #d63638; }
+
+/* Badges de sistema operativo */
+.os-badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #ffffff;
+    margin-left: 10px;
+}
+
+.os-windows { background-color: #0078d7; }
+.os-linux { background-color: #f0b849; }
+.os-macos { background-color: #8c8f94; }
+
+/* 3. GRIDS Y METRICAS */
+.ml-compact-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.compact-metric {
+    text-align: center;
+    padding: 8px;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.compact-value {
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.compact-label {
+    font-size: 10px;
+    color: #646970;
+}
+
+.ml-grid-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.dashboard-col {
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 4px;
+}
+
+.dashboard-col strong {
+    color: #1d2327;
+}
+
+.dashboard-item {
+    margin: 5px 0;
+    font-size: 12px;
+    color: #646970;
+}
+
+.ml-grid-4x2-compact {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin: 10px 0;
+}
+
+.metric-box-compact {
+    background: #f8f9fa;
+    padding: 8px;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.metric-value {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 3px;
+}
+
+.metric-label {
+    font-size: 10px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* 4. CONFIGURACIÓN Y FORMULARIOS */
+.ml-config-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.ml-config-label {
+    min-width: 180px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.ml-config-pro {
+    color: #2271b1;
+}
+
+/* 5. SISTEMA DE AYUDA */
+.ml-help-content {
+    display: none;
+    background: #f8f9fa;
+    border-left: 3px solid #0073aa;
+    padding: 15px;
+    margin-top: 10px;
+    border-radius: 0 4px 4px 0;
+}
+
+.ml-help-box {
+    margin-bottom: 15px;
+}
+
+.ml-help-box h3 {
+    margin-top: 0;
+    color: #1d2327;
+}
+
+.ml-help-box ul {
+    margin: 10px 0;
+    padding-left: 20px;
+}
+
+.ml-help-box li {
+    margin: 5px 0;
+    line-height: 1.5;
+}
+
+/* 6. TABLA ESTILOS - ANCHOS FIJOS */
+#ml-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+}
+
+#ml-table th,
+#ml-table td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    border: 1px solid #dcdcde;
+    padding: 4px 6px;
+    vertical-align: middle;
+    cursor: help;
+}
+
+/* Anchos fijos por columna */
+#ml-table th:nth-child(1), #ml-table td:nth-child(1) { width: 40px; min-width: 40px; max-width: 40px; }
+#ml-table th:nth-child(2), #ml-table td:nth-child(2) { width: 70px; min-width: 70px; max-width: 70px; }
+#ml-table th:nth-child(3), #ml-table td:nth-child(3) { width: 60px; min-width: 60px; max-width: 60px; }
+#ml-table th:nth-child(4), #ml-table td:nth-child(4) { width: 40px; min-width: 40px; max-width: 40px; }
+#ml-table th:nth-child(5), #ml-table td:nth-child(5) { width: 50px; min-width: 50px; max-width: 50px; }
+#ml-table th:nth-child(6), #ml-table td:nth-child(6) { width: 350px; min-width: 350px; max-width: 350px; }
+#ml-table th:nth-child(7), #ml-table td:nth-child(7) { width: 60px; min-width: 60px; max-width: 60px; }
+#ml-table th:nth-child(8), #ml-table td:nth-child(8) { width: 65px; min-width: 65px; max-width: 65px; }
+#ml-table th:nth-child(9), #ml-table td:nth-child(9) { width: 45px; min-width: 45px; max-width: 45px; }
+#ml-table th:nth-child(10), #ml-table td:nth-child(10) { width: 75px; min-width: 75px; max-width: 75px; }
+#ml-table th:nth-child(11), #ml-table td:nth-child(11) { width: 55px; min-width: 55px; max-width: 55px; }
+#ml-table th:nth-child(12), #ml-table td:nth-child(12) { width: 60px; min-width: 60px; max-width: 60px; }
+
+/* Hover efecto */
+#ml-table tbody tr:hover td {
+    background-color: #f9f9f9;
+}
+
+/* Tippy no afecta layout */
+.tippy-box {
+    position: fixed;
+    pointer-events: none;
+    z-index: 100000;
+}
+
+#ml-table td[title] {
+    position: relative;
+}
+
+/* 7. INTEGRACIÓN TIPPY.JS */
+.tippy-box[data-theme~='light-border'] {
+    background-color: #ffffff;
+    color: #1d2327;
+    border: 1px solid #dcdcde;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.4;
+    max-width: 280px;
+    padding: 8px 12px;
+}
+
+.tippy-box[data-theme~='light-border'] .tippy-arrow {
+    color: #ffffff;
+}
+
+.tippy-box[data-theme~='light-border'] .tippy-content {
+    padding: 0;
+    text-align: left;
+}
+
+/* 8. RESPONSIVE */
+@media screen and (max-width: 1200px) {
+    .ml-grid-4x2-compact {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    #ml-table th:nth-child(6), #ml-table td:nth-child(6) {
+        width: 250px;
+        min-width: 250px;
+        max-width: 250px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .ml-compact-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .ml-grid-dashboard {
+        grid-template-columns: 1fr;
+    }
+    
+    #ml-table {
+        font-size: 9px;
+    }
+}
+
+/* 9. PROGRESS BAR INCREMENTAL */
+.mlp-analysis-progress {
+    height: 6px;
+    background: #f0f0f1;
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.mlp-analysis-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #0073aa, #00a32a);
+    width: 0%;
+    transition: width 0.4s ease;
+    position: relative;
+}
+
+.mlp-analysis-progress-bar::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    animation: mlp-shimmer 1.5s infinite;
+}
+
+@keyframes mlp-shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* 10. ESTADOS DE CARGA */
+.mlp-section-loading {
+    opacity: 0.6;
+    pointer-events: none;
+    filter: blur(1px);
+    transition: opacity 0.3s ease;
+}
+
+.mlp-section-loaded {
+    opacity: 1;
+    filter: none;
+}
+
+/* 11. MENSAJES DE ESTADO */
+.mlp-status-msg {
+    font-size: 12px;
+    padding: 8px;
+    border-radius: 4px;
+    margin-top: 10px;
+}
+
+.mlp-status-success {
+    background: #e8f5e8;
+    color: #00a32a;
+    border-left: 3px solid #00a32a;
+}
+
+.mlp-status-warning {
+    background: #fff8e1;
+    color: #f0b849;
+    border-left: 3px solid #f0b849;
+}
+
+.mlp-status-error {
+    background: #fff5f5;
+    color: #d63638;
+    border-left: 3px solid #d63638;
+}
+
+/* 12. MODAL */
+.mlp-modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,.45);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mlp-modal-box {
+    background: #fff;
+    padding: 25px 30px;
+    border-radius: 6px;
+    max-width: 380px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.25);
+}
+
+/* 13. TOOLTIPS Y TABLA - ESTILOS ADICIONALES */
+/* Estilos para tooltips de Tippy.js */
+.tippy-box {
+    font-size: 11px !important;
+    line-height: 1.4 !important;
+    padding: 6px 8px !important;
+    max-width: 300px !important;
+}
+
+.tippy-arrow {
+    color: #333 !important;
+}
+
+/* Estilo para tooltips claros */
+.tippy-box[data-theme~='light-border'] {
+    background-color: #fff !important;
+    color: #1d2327 !important;
+    border: 1px solid #dcdcde !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+.tippy-box[data-theme~='light-border'] .tippy-arrow {
+    color: #dcdcde !important;
+}
+
+/* Cursor para elementos con tooltip */
+[data-tippy-alerta],
+[data-tippy-ua],
+[data-tippy-status],
+[data-tippy-metodo] {
+    cursor: help;
+    position: relative;
+}
+
+/* Mejora visual para celdas con tooltip */
+#ml-table td[data-tippy-alerta],
+#ml-table td[data-tippy-ua],
+#ml-table td[data-tippy-status],
+#ml-table td[data-tippy-metodo] {
+    transition: background-color 0.2s ease;
+}
+
+#ml-table td[data-tippy-alerta]:hover,
+#ml-table td[data-tippy-ua]:hover,
+#ml-table td[data-tippy-status]:hover,
+#ml-table td[data-tippy-metodo]:hover {
+    background-color: #f0f7ff !important;
+}
+
+/* Ajuste específico para columna de fecha */
+#ml-table thead th:nth-child(2),
+#ml-table tbody td:nth-child(2) {
+    width: 90px !important;
+    min-width: 90px !important;
+    max-width: 90px !important;
+    font-size: 9px !important;
+}
+
+/* Ajustes para columnas con iconos */
+#ml-table td[data-tippy-alerta],
+#ml-table td[data-tippy-ua],
+#ml-table td[data-tippy-status],
+#ml-table td[data-tippy-metodo] {
+    text-align: center !important;
+    font-size: 14px !important;
+}
+
+/* Para la columna UA (User Agent) */
+#ml-table td[data-tippy-ua] {
+    font-size: 12px !important;
+}
+
+/* Responsividad para tablas */
+@media screen and (max-width: 1200px) {
+    #ml-table {
+        font-size: 9px !important;
+    }
+    
+    #ml-table thead th:nth-child(2),
+    #ml-table tbody td:nth-child(2) {
+        width: 85px !important;
+        font-size: 8px !important;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    #ml-table-container {
+        overflow-x: auto;
+    }
+    
+    #ml-table {
+        min-width: 800px;
+    }
+    
+    #ml-table thead th:nth-child(2),
+    #ml-table tbody td:nth-child(2) {
+        width: 80px !important;
+    }
+}
+
+/* Estilo para tooltips en celdas específicas */
+#ml-table td[data-tippy-alerta] {
+    font-weight: bold;
+}
+
+#ml-table td[data-tippy-ua] {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+}
+
+#ml-table td[data-tippy-status] {
+    font-weight: normal;
+}
+
+#ml-table td[data-tippy-metodo] {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", sans-serif;
+}
+
+/* 14. ESTILOS MEJORADOS PARA GRÁFICOS - Memory Logger Pro v12.8.0 */
+/* Contenedores de gráficos */
+.mlp-chart-wrapper {
+    background: white;
+    border: 1px solid #dcdcde;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 15px;
+    transition: all 0.3s ease;
+}
+
+.mlp-chart-wrapper:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.mlp-chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.mlp-chart-legend {
+    display: flex;
+    gap: 12px;
+    font-size: 10px;
+}
+
+.mlp-chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 3px 6px;
+    border-radius: 3px;
+    transition: background 0.2s;
+}
+
+.mlp-chart-legend-item:hover {
+    background: #f6f7f7;
+}
+
+.mlp-chart-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.mlp-chart-legend-item.hidden {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.mlp-chart-canvas-container {
+    position: relative;
+    height: 250px;
+    width: 100%;
+}
+
+/* Controles de gráficos */
+.mlp-chart-control {
+    background: white;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    color: #1d2327;
+    transition: all 0.2s ease;
+}
+
+.mlp-chart-control:focus {
+    border-color: #2271b1;
+    box-shadow: 0 0 0 1px #2271b1;
+    outline: none;
+}
+
+.mlp-chart-control:hover {
+    border-color: #8c8f94;
+}
+
+/* Botones de acción de gráficos */
+#mlp-charts-container {
+    transition: grid-template-columns 0.3s ease;
+}
+
+.mlp-chart-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.mlp-chart-action-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mlp-chart-action-btn:hover {
+    background: #f0f0f1;
+    border-color: #8c8f94;
+}
+
+.mlp-chart-action-btn.active {
+    background: #2271b1;
+    color: white;
+    border-color: #2271b1;
+}
+
+/* Indicadores de carga */
+.mlp-chart-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    z-index: 10;
+}
+
+.mlp-chart-loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2271b1;
+    border-radius: 50%;
+    animation: mlp-spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes mlp-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Tooltips mejorados para gráficos */
+.chartjs-tooltip {
+    background: rgba(0, 0, 0, 0.85) !important;
+    border-radius: 4px !important;
+    border: none !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    padding: 8px 12px !important;
+    opacity: 0.95 !important;
+}
+
+.chartjs-tooltip .header {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    margin-bottom: 4px !important;
+    color: #fff !important;
+}
+
+.chartjs-tooltip .body {
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+}
+
+/* Responsividad mejorada */
+@media screen and (min-width: 1200px) {
+    #mlp-charts-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .mlp-chart-wrapper:nth-child(1) {
+        grid-column: 1 / -1;
+    }
+}
+
+@media screen and (max-width: 782px) {
+    .mlp-chart-wrapper {
+        padding: 10px;
+    }
+    
+    .mlp-chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .mlp-chart-legend {
+        flex-wrap: wrap;
+    }
+    
+    .mlp-chart-canvas-container {
+        height: 200px;
+    }
+}
+
+/* Modo oscuro compatible */
+@media (prefers-color-scheme: dark) {
+    .mlp-chart-wrapper {
+        background: #1d2327;
+        border-color: #2c3338;
+    }
+    
+    .mlp-chart-header {
+        border-bottom-color: #2c3338;
+    }
+    
+    .mlp-chart-control {
+        background: #2c3338;
+        border-color: #3c434a;
+        color: #f0f0f1;
+    }
+    
+    .mlp-chart-action-btn {
+        background: #2c3338;
+        border-color: #3c434a;
+        color: #f0f0f1;
+    }
+    
+    .mlp-chart-action-btn:hover {
+        background: #3c434a;
+    }
+}
+
+/* Animaciones suaves */
+.mlp-chart-update {
+    animation: mlp-chart-pulse 0.5s ease;
+}
+
+@keyframes mlp-chart-pulse {
+    0% { opacity: 0.8; transform: scale(0.99); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* Indicador de muestreo */
+.mlp-sampling-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 6px;
+    background: #f0f7ff;
+    border-radius: 10px;
+    font-size: 9px;
+    color: #2271b1;
+}
+
+.mlp-sampling-indicator.active {
+    background: #e8f5e8;
+    color: #00a32a;
+}
+
+/* Zoom controls */
+.mlp-zoom-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 5;
+}
+
+.mlp-zoom-btn {
+    width: 24px;
+    height: 24px;
+    background: white;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 12px;
+    color: #646970;
+    transition: all 0.2s;
+}
+
+.mlp-zoom-btn:hover {
+    background: #f6f7f7;
+    color: #1d2327;
+}
+
+/* =========================================================================
+   15. ESTILOS PARA PESTAÑA DIAGNÓSTICO (v12.8.0)
+   ========================================================================= */
+
+/* Spinner para cargas en la pestaña de diagnóstico */
+.mlp-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    border-top-color: #2271b1;
+    animation: mlp-spin 1s ease-in-out infinite;
+    vertical-align: middle;
+}
+
+.mlp-spinner-large {
+    width: 30px;
+    height: 30px;
+    border-width: 3px;
+    margin: 0 auto 10px auto;
+}
+
+/* Animación de aparición de resultados */
+.mlp-results-visible {
+    animation: mlp-fade-in 0.3s ease-out;
+}
+
+@keyframes mlp-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* FIN admin-styles.css */

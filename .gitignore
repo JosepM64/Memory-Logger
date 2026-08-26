@@ -1,0 +1,8 @@
+# Logs del plugin (contenen rutas reales del servidor)
+debug.log
+memory-usage.log
+memory-logger-errors.log
+
+# Sistema
+.DS_Store
+Thumbs.db
