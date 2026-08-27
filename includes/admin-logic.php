@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Lógica de Administración
+ * Memory Logger Pro v13.2.0 - Lógica de Administración
  *
  * Manejo de menús, páginas de admin y formularios
  * Optimizado para PHP 8.2+ con tipado estricto
@@ -668,20 +668,20 @@ function mlp_export_all_logs_csv(): void {
 
     foreach (array_reverse($lines) as $l) {
         if (!str_contains($l, 'DATE:')) continue;
-        $row = []; foreach (explode(' | ', $l) as $x) { $kv = explode(':', $x, 2); if (count($kv)==2) $row[trim($kv[0])] = trim($kv[1]); }
+        $row = mlp_parse_log_line($l);
         
         fputcsv($output, [
-            $row['DATE'] ?? '',
-            $row['TYPE'] ?? '',
-            $row['UA'] ?? '',
-            $row['HTTP'] ?? '',
-            $row['URL'] ?? '',
-            $row['MEM'] ?? '',
-            $row['TIME'] ?? '',
-            $row['SQL'] ?? '',
-            $row['SIZE'] ?? '',
-            $row['CPU'] ?? '',
-            $row['SIZE_METHOD'] ?? ''
+            $row['date'] ?? '',
+            $row['type'] ?? '',
+            $row['ua'] ?? '',
+            $row['http'] ?? '',
+            $row['url'] ?? '',
+            $row['mem'] ?? '',
+            $row['time'] ?? '',
+            $row['sql'] ?? '',
+            $row['size'] ?? '',
+            $row['cpu'] ?? '',
+            $row['size_method'] ?? ''
         ]);
     }
 
@@ -838,7 +838,7 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
     $report_data = [
         'meta' => [
             'generated_at' => current_time('mysql'),
-            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.0.0',
+            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.2.0',
             'wordpress_version' => get_bloginfo('version'),
             'php_version' => phpversion(),
             'site_url' => get_site_url(),

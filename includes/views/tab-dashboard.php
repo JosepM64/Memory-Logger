@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Vista Dashboard (Pestaña 1)
+ * Memory Logger Pro v13.2.0 - Vista Dashboard (Pestaña 1)
  * Restaurado íntegramente con todos los botones, ayuda y columnas originales
  * MEJORADO: Añadido Security Score y Visitor Stats
  */
@@ -232,26 +232,16 @@ function mlp_render_dashboard_view(
     // VISITANTES
     echo '<div class="ml-card" style="padding:12px; margin:0;"><strong>👥 Visitantes</strong><hr style="margin:8px 0; border:none; border-top:1px solid #eee;"><div style="font-size:11px; line-height:1.8;">';
     
-    // Extraer contadores de visitor_stats (estructura variable)
-    $human_count = 0;
-    $bot_count = 0;
-    $unknown_count = 0;
+    $visitor_stats = function_exists('mlp_get_advanced_stats') ? (mlp_get_advanced_stats()['visitor_stats'] ?? []) : [];
+    $visitor_data = !empty($visitor_stats) ? mlp_process_visitor_stats($visitor_stats) : [
+        'human_count' => 0, 'bot_count' => 0, 'unknown_count' => 0, 'total' => 0,
+        'human_pct' => 0, 'bot_pct' => 0, 'unknown_pct' => 0, 'has_data' => false
+    ];
     
-    if (!empty($visitor_stats) && is_array($visitor_stats)) {
-        foreach ($visitor_stats as $type => $data) {
-            if (is_array($data)) {
-                $human_count += (int)($data['human'] ?? 0);
-                $bot_count += (int)($data['bot'] ?? 0);
-                $unknown_count += (int)($data['unknown'] ?? 0);
-            } else {
-                if ($type === 'human') $human_count += (int)$data;
-                elseif ($type === 'bot') $bot_count += (int)$data;
-                elseif ($type === 'unknown') $unknown_count += (int)$data;
-            }
-        }
-    }
-    
-    $total_visitors = $human_count + $bot_count + $unknown_count;
+    $human_count = $visitor_data['human_count'];
+    $bot_count = $visitor_data['bot_count'];
+    $unknown_count = $visitor_data['unknown_count'];
+    $total_visitors = $visitor_data['total'];
     
     if ($total_visitors > 0) {
         $human_pct = round(($human_count / $total_visitors) * 100, 1);
@@ -544,26 +534,23 @@ function mlp_render_dashboard_view(
     echo '</tr></thead><tbody>';
         foreach (array_reverse($lines) as $l) {
             if (!str_contains($l, 'DATE:')) continue;
-            $row = [];
-            foreach (explode(' | ', $l) as $x) {
-                $kv = explode(':', $x, 2);
-                if (count($kv) == 2) $row[trim($kv[0])] = trim($kv[1]);
-            }
-            $ua_raw = $row['UA'] ?? '';
+            $row = mlp_parse_log_line($l);
+            if (empty($row)) continue;
+            $ua_raw = $row['ua'] ?? '';
             $ua = mlp_identify_user_agent($ua_raw);
             $row_for_render = [
-                'alert' => (($row['HTTP'] ?? 200) >= 500) ? '💀' : (($row['MEM'] ?? 0) > $opts['threshold_mb'] ? '🔥' : (($row['TIME'] ?? 0) > $opts['time_risk'] ? '🐢' : '✅')),
-                'date' => substr($row['DATE'] ?? '', 5, 11),
-                'type' => $row['TYPE'] ?? '-',
+                'alert' => (($row['http'] ?? 200) >= 500) ? '💀' : (($row['mem'] ?? 0) > $opts['threshold_mb'] ? '🔥' : (($row['time'] ?? 0) > $opts['time_risk'] ? '🐢' : '✅')),
+                'date' => substr($row['date'] ?? '', 5, 11),
+                'type' => $row['type'] ?? '-',
                 'who' => $ua['icon'],
-                'status' => (int)($row['HTTP'] ?? 200),
-                'url' => $row['URL'] ?? '',
-                'mem' => (float)($row['MEM'] ?? 0),
-                'time' => (float)($row['TIME'] ?? 0),
-                'sql' => (int)($row['SQL'] ?? 0),
-                'size' => (float)($row['SIZE'] ?? 0),
-                'cpu' => (float)($row['CPU'] ?? 0),
-                'method' => $row['SIZE_METHOD'] ?? '',
+                'status' => (int)($row['http'] ?? 200),
+                'url' => $row['url'] ?? '',
+                'mem' => (float)($row['mem'] ?? 0),
+                'time' => (float)($row['time'] ?? 0),
+                'sql' => (int)($row['sql'] ?? 0),
+                'size' => (float)($row['size'] ?? 0),
+                'cpu' => (float)($row['cpu'] ?? 0),
+                'method' => $row['size_method'] ?? '',
             ];
             echo mlp_render_history_row($row_for_render, $ua_raw);
         }

@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - AJAX Logic
+ * Memory Logger Pro v13.2.0 - AJAX Logic
  * Manejo de peticiones AJAX robusto con carga dinámica de dependencias
  */
 
@@ -345,7 +345,13 @@ function mlp_ajax_check_file_integrity(): void {
         check_ajax_referer('mlp_lazy_load_diagnostic_nonce', 'security');
         mlp_ajax_require_admin();
         require_once MLP_PATH . 'includes/core-logic.php';
-        wp_send_json_success(['html' => '<div style="color:#00a32a;">✅ Núcleo verificado.</div>']);
+        $integrity = mlp_check_file_integrity();
+        if (!empty($integrity['issues'])) {
+            $msg = '<div style="color:#d63638;">❌ Problemas detectados: ' . implode('<br>', $integrity['issues']) . '</div>';
+            wp_send_json_success(['html' => $msg]);
+        } else {
+            wp_send_json_success(['html' => '<div style="color:#00a32a;">✅ Núcleo verificado.</div>']);
+        }
     });
 }
 

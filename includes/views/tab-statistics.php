@@ -1,7 +1,7 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Vista Estadísticas (Pestaña 2)
- * Restauración integral v13.0.0 con todas las secciones visuales y lógicas
+ * Memory Logger Pro v13.2.0 - Vista Estadísticas (Pestaña 2)
+ * Restauración integral v13.2.0 con todas las secciones visuales y lógicas
  */
 
 if (!defined('ABSPATH')) {
@@ -230,15 +230,12 @@ function mlp_render_statistics_view(array $opts, array $hosting_info, array $cal
                 
                 foreach ($log_lines as $l) {
                     if (!str_contains($l, 'DATE:')) continue;
-                    $row = [];
-                    foreach (explode(' | ', $l) as $x) {
-                        $kv = explode(':', $x, 2);
-                        if (count($kv) == 2) $row[trim($kv[0])] = trim($kv[1]);
-                    }
-                    $url = $row['URL'] ?? '';
-                    $mem = (float)($row['MEM'] ?? 0);
-                    $time = (float)($row['TIME'] ?? 0);
-                    $cpu = (float)($row['CPU'] ?? 0);
+                    $row = mlp_parse_log_line($l);
+                    if (empty($row)) continue;
+                    $url = $row['url'] ?? '';
+                    $mem = (float)($row['mem'] ?? 0);
+                    $time = (float)($row['time'] ?? 0);
+                    $cpu = (float)($row['cpu'] ?? 0);
                     
                     if ($url && ($mem > 0 || $time > 0)) {
                         if (!isset($url_stats[$url])) {

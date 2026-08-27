@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Funciones de Utilidad
+ * Memory Logger Pro v13.2.0 - Funciones de Utilidad
  *
  * Funciones auxiliares generales y reutilizables
  * Optimizado para PHP 8.2+ con tipado estricto
@@ -676,29 +676,7 @@ function mlp_clear_all_logs_cache(): bool {
     }
 
     // Limpiar transients
-    global $wpdb;
-    $transient_patterns = [
-        '_transient_mlp_%',
-        '_site_transient_mlp_%',
-        '_transient_timeout_mlp_%',
-        '_site_transient_timeout_mlp_%',
-    ];
-
-    foreach ($transient_patterns as $pattern) {
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '{$pattern}'");
-    }
-
-    // Limpiar cache de opciones específicas
-    $specific_transients = [
-        'mlp_system_health',
-        'mlp_cpu_calibration_' . gethostname(),
-        'mlp_security_scan_' . md5(MLP_PATH),
-        'mlp_quick_security_scan_' . md5(MLP_PATH),
-    ];
-
-    foreach ($specific_transients as $transient) {
-        delete_transient($transient);
-    }
+    mlp_purge_cache();
 
     return $success;
 }
@@ -932,6 +910,67 @@ if (!function_exists('mlp_process_visitor_stats')) {
             'unknown_pct' => $total > 0 ? round(($unknown_count / $total) * 100, 1) : 0,
             'has_data' => $total > 0,
         ];
+    }
+}
+
+/**
+ * Parse a single log line into an associative array.
+ * Expected format: "DATE:value | TYPE:value | URL:value | MEM:value | TIME:value | SQL:value | CPU:value | HTTP:value | UA:value | VISITOR:value | SIZE_METHOD:value | SIZE:value"
+ * 
+ * @param string $line A single line from the log file.
+ * @return array Associative array with keys: date, type, url, mem, time, sql, cpu, http, ua, visitor, size_method, size.
+ *         Returns empty array if line does not contain DATE:.
+ */
+if (!function_exists('mlp_parse_log_line')) {
+    function mlp_parse_log_line(string $line): array {
+        if (empty($line) || !str_contains($line, 'DATE:')) {
+            return [];
+        }
+        $parts = explode(' | ', $line);
+        $result = [];
+        foreach ($parts as $part) {
+            $kv = explode(':', $part, 2);
+            if (count($kv) === 2) {
+                $result[trim($kv[0])] = trim($kv[1]);
+            }
+        }
+        // Normalize keys to lowercase for consistency
+        $normalized = [];
+        foreach ($result as $key => $value) {
+            $normalized[strtolower($key)] = $value;
+        }
+        return $normalized;
+    }
+}
+
+/**
+ * Purge all plugin-specific transients and caches.
+ * This function deletes all transients that start with 'mlp_' and related site transients.
+ * 
+ * @return void
+ */
+if (!function_exists('mlp_purge_cache')) {
+    function mlp_purge_cache(): void {
+        global $wpdb;
+        // Delete plugin transients
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_%'");
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_mlp_%'");
+        // Delete timeout transients as well
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_mlp_%'");
+        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_timeout_mlp_%'");
+        // Also delete any specific transients we know about (optional)
+        delete_transient('mlp_system_health');
+        delete_transient('mlp_cpu_calibration_' . gethostname());
+        delete_transient('mlp_security_scan_' . md5(MLP_PATH));
+        delete_transient('mlp_quick_security_scan_' . md5(MLP_PATH));
+        delete_transient('mlp_system_health_v9');
+        delete_transient('mlp_advanced_stats_v7');
+        delete_transient('mlp_error_patterns_analysis_' . md5(MLP_PATH));
+        delete_transient('mlp_file_integrity_check_' . md5(MLP_PATH));
+        delete_transient('mlp_hosting_recommendations_' . md5(MLP_PATH . PHP_VERSION));
+        delete_transient('mlp_database_analysis_' . md5(MLP_PATH));
+        delete_transient('mlp_wp_plugins_analysis_v4_' . md5(MLP_PATH . get_bloginfo('version')));
+        delete_transient('mlp_quick_security_scan_opt_' . md5(MLP_PATH));
     }
 }
 

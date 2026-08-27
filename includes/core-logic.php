@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Core Logic
+ * Memory Logger Pro v13.2.0 - Core Logic
  * 
  * Funciones principales del plugin: monitoreo, logging, detección de errores y análisis profundo.
  * Incluye lógica avanzada para Hosting, Base de Datos y Patrones de Error.
@@ -515,7 +515,7 @@ function mlp_log_request(): void {
         'output_buffer',
         round((ob_get_length() ?: 0) / 1024, 2)
     );
-    @file_put_contents(MLP_LOG_FILE, $data, FILE_APPEND);
+    @file_put_contents(MLP_LOG_FILE, $data, FILE_APPEND | LOCK_EX);
 }
 
 /**
@@ -586,24 +586,15 @@ function mlp_get_advanced_stats(): array {
         
         // Optimización: procesar en bloque
         foreach ($lines as $l) {
-            // Parseo rápido manual (más rápido que regex)
-            $parts = explode(' | ', $l);
-            $row = [];
-            foreach ($parts as $p) {
-                $kv = explode(':', $p, 2);
-                if (count($kv) === 2) {
-                    $row[trim($kv[0])] = trim($kv[1]);
-                }
-            }
-            
+            $row = mlp_parse_log_line($l);
             if (empty($row)) continue;
 
-            $m = (float)($row['MEM']??0);
-            $t = (float)($row['TIME']??0);
-            $c = (float)($row['CPU']??0);
-            $s = (int)($row['SQL']??0);
-            $sz = (float)($row['SIZE']??0);
-            $method = $row['SIZE_METHOD'] ?? 'unknown';
+            $m = (float)($row['mem']??0);
+            $t = (float)($row['time']??0);
+            $c = (float)($row['cpu']??0);
+            $s = (int)($row['sql']??0);
+            $sz = (float)($row['size']??0);
+            $method = $row['size_method'] ?? 'unknown';
 
             $sum_mem += $m; $sum_time += $t; $sum_cpu += $c; $sum_sql += $s; $sum_size += $sz;
             
@@ -638,12 +629,12 @@ function mlp_get_advanced_stats(): array {
             // Picos peligrosos (Umbrales ajustables)
             if ($m > 200 || $t > 5 || $c > 80) {
                 $stats['dangerous_peaks'][] = [
-                    'date' => $row['DATE']??'',
-                    'type' => $row['TYPE']??'',
+                    'date' => $row['date']??'',
+                    'type' => $row['type']??'',
                     'memory' => $m,
                     'time' => $t,
                     'cpu' => $c,
-                    'url' => $row['URL']??'',
+                    'url' => $row['url']??'',
                     'risk_level' => ($m > 256 || $t > 10) ? 'high' : 'medium'
                 ];
             }

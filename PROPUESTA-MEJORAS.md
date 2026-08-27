@@ -1,6 +1,6 @@
 # Memory Logger Pro — Llista de tasques de millora
 
-> Document intern amb les millores detectades a l'anàlisi del codi (v13.0.0).
+> Document intern amb les millores detectades a l'anàlisi del codi (v13.2.0).
 > Criteris que s'han de mantenir sempre: **simplicitat, utilitat, SoC (Separació de Concerns)** i **no carregar el servidor**.
 > Marca amb `[x]` cada tasca quan estigui feta.
 
@@ -30,7 +30,7 @@
 - [ ] **Arreglar bug "Integritat Core"** — `ajax-logic.php:343`: `mlp_ajax_check_file_integrity()` retorna `"✅ Núcleo verificado"` hardcoded. Fer que executi `mlp_check_file_integrity()` de veritat.
 - [ ] **Usar helper de visitants** — Substituir el comptatge duplicat de `tab-dashboard.php:236` i `tab-diagnostic.php:126` per `mlp_process_visitor_stats()` (`utils.php:903`).
 - [ ] **Esborrar codi mort** — `MLP_ADMIN_EMAIL`, `mlp_log_plugin_errors()` (mai hookejat), `mlp_check_large_error_log()` (mai hookejat), `mlp_get_cached()` (mai usat), profiling (`mlp_start_plugin_profiling`, `mlp_identify_plugin_by_request`) i stubs buits a `ajax-logic.php:670-680`.
-- [ ] **Unificar versions als docblocks** — Els arxius diuen "12.8.0" als docblocks però el header és 13.0.0 (`utils.php`, `core-logic.php`, `admin-logic.php`, `ajax-logic.php`).
+- [x] **Unificar versions als docblocks** — Els arxius diuen "13.2.0" als docblocks i el header és coherent (tots els arxius actualitzats a v13.2.0).
 
 ---
 

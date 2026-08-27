@@ -1,5 +1,12 @@
 Memory Logger Pro - Changelog
 
+## 13.2.0 - 2026-08-27
+- Implementada Fase 1 de mejoras: datos reales y reducción de carga de servidor
+- Eliminados valores hardcoded que mostraban datos falsos en el dashboard
+- Añadido LOCK_EX para prevenir corrupción de archivos de log en entornos concurrentes
+- Eliminada consulta innecesaria a la baza de datos en cada request frontal
+- Mejorado el sistema de notificación de errores críticos con caché adecuada
+
 ## 13.0.0 - 2026-03-28
 
 ### Requisitos Actualizados

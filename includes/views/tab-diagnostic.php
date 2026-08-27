@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Vista Diagnóstico y Seguridad (Pestaña 3)
+ * Memory Logger Pro v13.2.0 - Vista Diagnóstico y Seguridad (Pestaña 3)
  * Versión OPTIMIZADA con correcciones de bugs y mejor rendimiento
  */
 
@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Renderizar la vista de Diagnóstico y Seguridad - VERSIÓN OPTIMIZADA v13.0.0
+ * Renderizar la vista de Diagnóstico y Seguridad - VERSIÓN OPTIMIZADA v13.2.0
  */
 function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $calibration, array $health): void {
     // Detectar navegador para UX adaptativa
@@ -122,26 +122,16 @@ function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $cal
     echo '</div>';
 
     // 👥 VISITANTES (NUEVO v12.8.0)
-    $raw_visitor_stats = function_exists('mlp_get_advanced_stats') ? (mlp_get_advanced_stats()['visitor_stats'] ?? []) : [];
-    $visitor_stats = [];
-    $human_count = 0;
-    $bot_count = 0;
-    $unknown_count = 0;
-    
-    if (!empty($raw_visitor_stats) && is_array($raw_visitor_stats)) {
-        foreach ($raw_visitor_stats as $type => $data) {
-            if (is_array($data)) {
-                $human_count += (int)($data['human'] ?? 0);
-                $bot_count += (int)($data['bot'] ?? 0);
-                $unknown_count += (int)($data['unknown'] ?? 0);
-            } else {
-                if ($type === 'human') $human_count += (int)$data;
-                elseif ($type === 'bot') $bot_count += (int)$data;
-                elseif ($type === 'unknown') $unknown_count += (int)$data;
-            }
-        }
-    }
-    $total_visitors = $human_count + $bot_count + $unknown_count;
+     $raw_visitor_stats = function_exists('mlp_get_advanced_stats') ? (mlp_get_advanced_stats()['visitor_stats'] ?? []) : [];
+     $visitor_data = !empty($raw_visitor_stats) ? mlp_process_visitor_stats($raw_visitor_stats) : [
+         'human_count' => 0, 'bot_count' => 0, 'unknown_count' => 0, 'total' => 0,
+         'human_pct' => 0, 'bot_pct' => 0, 'unknown_pct' => 0, 'has_data' => false
+     ];
+     
+     $human_count = $visitor_data['human_count'];
+     $bot_count = $visitor_data['bot_count'];
+     $unknown_count = $visitor_data['unknown_count'];
+     $total_visitors = $visitor_data['total'];
     
     echo '<div style="margin-top:12px; padding:10px; background:#f8f9fa; border-radius:4px; border-left:3px solid #2271b1;">';
     echo '<div style="font-size:10px; font-weight:600; color:#646970; margin-bottom:8px;">👥 VISITANTES (Bots vs Humanos)</div>';

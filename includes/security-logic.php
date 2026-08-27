@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.0.0 - Security Logic
+ * Memory Logger Pro v13.2.0 - Security Logic
  * Escaneo de vulnerabilidades y auditoría de plugins
  */
 
