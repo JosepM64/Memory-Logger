@@ -564,7 +564,10 @@ function mlp_show_critical_error_notices(): void {
         return;
     }
 
+    $errors = get_transient('mlp_cached_errors_list');
+if ($errors === false) {
     $errors = function_exists('mlp_enhanced_error_detection') ? mlp_enhanced_error_detection() : [];
+}
     $critical_errors = array_filter($errors, static function($error) {
         return in_array($error['severity'], ['critical', 'high'], true);
     });

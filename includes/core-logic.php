@@ -469,9 +469,9 @@ function mlp_get_system_health(bool $force_refresh = false): array {
         'theme' => wp_get_theme()->get('Name'),
         'plugins_count' => count((array)get_option('active_plugins', [])),
         'oc_stat' => (function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache()) ? 'Activo' : 'Inactivo',
-        'oc_lat' => 0.10,
-        'oc_class' => 'green',
-        'opcache_hit' => 0, // OPcache deshabilitado para evitar errores en hosting compartidos
+        'oc_lat' => 0,
+        'oc_class' => (function_exists('wp_using_ext_object_cache') && wp_using_ext_object_cache()) ? 'green' : 'red',
+        'opcache_hit' => function_exists('mlp_safe_opcache_get_hit') ? mlp_safe_opcache_get_hit() : 0,
         'load_avg' => mlp_get_system_cpu_load(),
         // Datos unificados de mlp_analyze_database()
         'db_health_score' => $db_analysis['health_score'] ?? 0,
@@ -522,20 +522,39 @@ function mlp_log_request(): void {
  * Obtener métricas actuales de la petición
  */
 function mlp_get_current_metrics(): array {
+    $memory = round(memory_get_peak_usage(true) / 1048576, 2);
+    $time = round(microtime(true) - (defined('WP_START_TIME') ? WP_START_TIME : microtime(true)), 3);
+    $cpu = mlp_get_intelligent_cpu_usage();
+    $size = round((ob_get_length() ?: 0) / 1024, 2);
+    $sql = function_exists('get_num_queries') ? get_num_queries() : 0;
+    $http = http_response_code();
+    
+    // Memory percentage based on limit
+    $mem_limit = mlp_convert_to_bytes(ini_get('memory_limit'));
+    $mem_usage = memory_get_peak_usage(true);
+    $memory_percent = ($mem_limit > 0) ? round(($mem_usage / $mem_limit) * 100, 1) : 0;
+    
+    // Get max values from advanced stats (cached)
+    $stats = mlp_get_advanced_stats();
+    $max_memory = $stats['max_memory'] ?? 0;
+    $max_time = $stats['max_time'] ?? 0;
+    $max_cpu = $stats['max_cpu'] ?? 0;
+    $max_size = $stats['max_size'] ?? 0;
+    
     return [
         'date' => current_time('mysql'),
-        'memory' => round(memory_get_peak_usage(true) / 1048576, 2),
-        'memory_percent' => 25,
-        'time' => round(microtime(true) - (defined('WP_START_TIME') ? WP_START_TIME : microtime(true)), 3),
-        'cpu' => mlp_get_intelligent_cpu_usage(),
-        'size' => round((ob_get_length() ?: 0) / 1024, 2),
-        'sql' => function_exists('get_num_queries') ? get_num_queries() : 0,
-        'http' => http_response_code(),
+        'memory' => $memory,
+        'memory_percent' => $memory_percent,
+        'time' => $time,
+        'cpu' => $cpu,
+        'size' => $size,
+        'sql' => $sql,
+        'http' => $http,
         'size_method' => 'output_buffer',
-        'max_memory' => 291.81,
-        'max_time' => 17.995,
-        'max_cpu' => 53.40,
-        'max_size' => 34.70
+        'max_memory' => $max_memory,
+        'max_time' => $max_time,
+        'max_cpu' => $max_cpu,
+        'max_size' => $max_size
     ];
 }
 
@@ -1097,7 +1116,10 @@ function mlp_analyze_database(): array {
  */
 function mlp_get_load_status(): array {
     $load = mlp_get_system_cpu_load();
-    return ['load_avg' => $load, 'mem_percent' => 27.9, 'should_throttle' => $load > 10, 'is_critical' => $load > 20, 'is_high_load' => $load > 10, 'throttle_factor' => 0.25];
+    $mem_limit = mlp_convert_to_bytes(ini_get('memory_limit'));
+    $mem_usage = memory_get_peak_usage(true);
+    $mem_percent = ($mem_limit > 0) ? round(($mem_usage / $mem_limit) * 100, 1) : 0;
+    return ['load_avg' => $load, 'mem_percent' => $mem_percent, 'should_throttle' => $load > 10, 'is_critical' => $load > 20, 'is_high_load' => $load > 10, 'throttle_factor' => 1.0];
 }
 
 /**
@@ -1209,6 +1231,7 @@ function mlp_execute_cron_error_scan(): void {
     $critical_count = count(array_filter($errors, fn($e) => $e['severity'] === 'critical'));
     
     set_transient('mlp_cached_errors_count', count($errors), HOUR_IN_SECONDS);
+     set_transient('mlp_cached_errors_list', $errors, HOUR_IN_SECONDS);
     
     if ($critical_count > 5) {
         $cache_key = 'mlp_cron_error_alert_' . date('Y-m-d');
