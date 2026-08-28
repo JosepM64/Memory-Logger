@@ -7,6 +7,9 @@ Memory Logger Pro - Changelog
 - Parser de log único: `mlp_group_stats_by_visitor()` ahora usa `mlp_parse_log_line()` (corregido bug de etiquetas de gráficos vacías)
 - Exportación unificada: 1 solo handler AJAX + 1 nonce (eliminados 3 handlers admin-post duplicados)
 - Eliminada colisión de hooks en `admin_post_mlp_export_diagnostic_report`
+- Implementada Fase 3 de mejoras: seguridad operativa
+- Guard en "Optimizar BD": límite de tiempo de 25s y tablas >500 MB omitidas (evita bloquear tablas y matar hosting compartidos)
+- Corregida consulta `SHOW TABLE STATUS LIKE %s` mal formateada en la optimización de BD
 
 ## 13.2.0 - 2026-08-27
 - Implementada Fase 1 de mejoras: datos reales y reducción de carga de servidor

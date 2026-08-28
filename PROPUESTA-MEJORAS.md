@@ -36,8 +36,8 @@
 
 ## Fase 3 — Seguretat operativa
 
-- [ ] **Guard a "Optimizar BD"** — `ajax-logic.php:514`: saltar taules >500 MB (o avisar), límit de temps i fer-ho via WP-Cron si cal. Evita bloquejar taules i matar hosting compartits.
-- [ ] **Revisar `.gitignore`** — Ja exclou `debug.log`, `memory-usage.log`, `memory-logger-errors.log` (fitxers amb rutes reals del servidor).
+- [x] **Guard a "Optimizar BD"** — `ajax-logic.php:514`: saltar taules >500 MB (o avisar), límit de temps i fer-ho via WP-Cron si cal. Evita bloquejar taules i matar hosting compartits. *(Implementat: límit de temps global de 25s + taules >500 MB saltades amb avís al log. De pas corregit el bug `SHOW TABLE STATUS LIKE %s` mal format amb resultat no usat.)*
+- [x] **Revisar `.gitignore`** — Ja exclou `debug.log`, `memory-usage.log`, `memory-logger-errors.log` (fitxers amb rutes reals del servidor). *(Verificat: correcte.)*
 
 ---
 

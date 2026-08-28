@@ -553,21 +553,42 @@ function mlp_ajax_optimize_db_complete(): void {
         $optimized = 0;
         $errors = [];
         $optimization_log = [];
+        $skipped_large = 0;
         
+        // Guards de seguridad: límite de tiempo y tamaño máximo de tabla
+        $start_time = microtime(true);
+        $time_limit = 25; // Segundos máximos de la operación (evita matar hosting compartidos)
+        $max_table_size_mb = 500; // Tablas mayores se saltan (ALTER bloquea la tabla)
+
         foreach ($tables as $table) {
+            // Límite de tiempo global
+            if ((microtime(true) - $start_time) > $time_limit) {
+                $optimization_log[] = "⏱️ Tiempo límite alcanzado (" . $time_limit . "s), se detiene la optimización.";
+                break;
+            }
+            
             $table_name = $table[0];
             
             if (strpos($table_name, $wp_prefix) !== 0) continue;
             
-            $check = $wpdb->get_var($wpdb->prepare("SHOW TABLES LIKE %s", $table_name));
-            if ($check !== $table_name) continue;
+            // Obtener tamaño y engine de la tabla
+            $table_info = $wpdb->get_row($wpdb->prepare(
+                "SELECT ENGINE, ROUND((DATA_LENGTH + INDEX_LENGTH) / 1048576, 2) AS size_mb FROM information_schema.TABLES WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s",
+                DB_NAME,
+                $table_name
+            ));
+            if (!$table_info) continue;
             
-            // Obtener estado antes de optimizar
-            $before_status = $wpdb->get_row("SHOW TABLE STATUS LIKE %s", $table_name);
-            $before_overhead = $before_status->Data_free ?? 0;
+            // Saltar tablas grandes: ALTER/OPTIMIZE las bloquearía demasiado tiempo
+            $size_mb = (float)$table_info->size_mb;
+            if ($size_mb > $max_table_size_mb) {
+                $skipped_large++;
+                $optimization_log[] = "⚠️ {$table_name} ({$size_mb} MB) saltada: demasiado grande para optimizar en caliente.";
+                continue;
+            }
             
             // Para InnoDB, usar ALTER TABLE para regenerar
-            $engine = $wpdb->get_var($wpdb->prepare("SELECT ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA=%s AND TABLE_NAME=%s", DB_NAME, $table_name));
+            $engine = $table_info->engine;
             
             if ($engine === 'InnoDB') {
                 // InnoDB: ALTER TABLE para regenerar (más efectivo que OPTIMIZE)
@@ -580,7 +601,7 @@ function mlp_ajax_optimize_db_complete(): void {
                     $optimization_log[] = "✗ {$table_name} (ALTER falló)";
                 }
             } else {
-                // MyISAM/其他: OPTIMIZE TABLE normal
+                // MyISAM/otros: OPTIMIZE TABLE normal
                 $opt_result = $wpdb->query("OPTIMIZE TABLE {$table_name}");
                 if ($opt_result !== false) {
                     $optimized++;
@@ -598,7 +619,6 @@ function mlp_ajax_optimize_db_complete(): void {
         delete_transient('mlp_wp_plugins_analysis_v4_' . md5(MLP_PATH . get_bloginfo('version')));
         
         // Eliminar cualquier transient que comience con mlp_
-        global $wpdb;
         $deleted_transients = $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_%'");
         $deleted_transients += $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_mlp_%'");
         
@@ -615,7 +635,7 @@ function mlp_ajax_optimize_db_complete(): void {
             $msg_parts[] = $optimized . ' tablas regeneradas';
         }
         
-        if (empty($msg_parts)) {
+        if (empty($msg_parts) && $skipped_large === 0) {
             wp_send_json_success([
                 'message' => '✅ La base de datos ya estaba optimizada.',
                 'count' => 0,
@@ -625,6 +645,9 @@ function mlp_ajax_optimize_db_complete(): void {
         }
         
         $msg = '✅ Optimización completada: ' . implode(', ', $msg_parts) . '.';
+        if ($skipped_large > 0) {
+            $msg .= ' ⚠️ ' . $skipped_large . ' tablas grandes omitidas (>' . $max_table_size_mb . ' MB).';
+        }
         if (!empty($errors)) {
             $msg .= ' (' . count($errors) . ' tablas con errores).';
         }
