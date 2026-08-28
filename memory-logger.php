@@ -3,7 +3,7 @@
  * Plugin Name: Memory Logger Pro
  * Plugin URI: https://www.posicionamientowebysem.com/memory-logger-pro
  * Description: Auditor de rendimiento PRO universal: Gráficos, Memoria, Tiempo, CPU inteligente, Tamaño mejorado, Diagnóstico & Seguridad avanzado.
- * Version: 13.2.0
+ * Version: 13.3.0
  * Requires at least: 6.2
  * Requires PHP: 8.2
  * Author: Josep Maria Tapia Estarriaga
@@ -14,7 +14,7 @@
  * Domain Path: /languages
  *
  * @package Memory Logger Pro
- * @version 13.2.0
+ * @version 13.3.0
  */
 
 // ============================================================================
@@ -32,7 +32,7 @@ define('MLP_DEBUG_MODE', false);
 // ============================================================================
 // 3. CONSTANTES DEL PLUGIN
 // ============================================================================
-define('MLP_VERSION', '13.2.0');
+define('MLP_VERSION', '13.3.0');
 define('MLP_PATH', plugin_dir_path(__FILE__));
 define('MLP_URL', plugin_dir_url(__FILE__));
 define('MLP_MAIN_FILE', __FILE__);
@@ -382,77 +382,6 @@ function mlp_render_dashboard_widget(): void {
 // ============================================================================
 // 8. HOOK DE ADMIN-POST PARA EXPORTACIÓN (CORREGIDO)
 // ============================================================================
-
-/**
- * Manejador de exportación para admin-post.php - VERSIÓN CORREGIDA
- */
-function mlp_handle_admin_post_export(): void {
-    // Verificar nonce
-    if (!isset($_POST['mlp_nonce']) ||
-        !wp_verify_nonce($_POST['mlp_nonce'], 'mlp_export_diagnostic_action')) {
-        wp_die('❌ Error de seguridad: Nonce inválido.', 'Error de Seguridad', 403);
-    }
-
-    // Verificar permisos
-    if (!current_user_can('manage_options')) {
-        wp_die('❌ Permisos insuficientes.', 'Error de Permisos', 403);
-    }
-
-    try {
-        // Obtener formato (por defecto: json)
-        $format = sanitize_text_field($_POST['format'] ?? 'json');
-
-        // Validar formato permitido
-        $allowed_formats = ['json', 'html', 'txt', 'csv'];
-        if (!in_array($format, $allowed_formats)) {
-            $format = 'json';
-        }
-
-        // Verificar que la función de generación existe
-        if (!function_exists('mlp_generate_diagnostic_report')) {
-            // La función está en admin-logic.php que ya se incluyó
-            wp_die('❌ Función de generación de reporte no disponible.', 'Error del Sistema', 500);
-        }
-
-        $report_content = mlp_generate_diagnostic_report($format);
-        $filename = 'memory-logger-diagnostico-' . date('Y-m-d-His') . '.' . $format;
-
-        // Determinar tipo MIME
-        $mime_types = [
-            'json' => 'application/json',
-            'html' => 'text/html',
-            'txt' => 'text/plain',
-            'csv' => 'text/csv'
-        ];
-        $mime_type = $mime_types[$format] ?? 'application/octet-stream';
-
-        // Enviar cabeceras para descarga
-        header('Content-Type: ' . $mime_type);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Content-Length: ' . strlen($report_content));
-        header('Cache-Control: no-cache, no-store, must-revalidate');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        // Enviar contenido
-        echo $report_content;
-        exit;
-
-    } catch (Exception $e) {
-        // Redirigir de vuelta con mensaje de error
-        $redirect_url = add_query_arg([
-            'page' => 'memory-log-viewer',
-            'tab' => 'diagnostic',
-            'mlp_error' => urlencode('❌ Error al exportar: ' . $e->getMessage())
-        ], admin_url('admin.php'));
-
-        wp_redirect($redirect_url);
-        exit;
-    }
-}
-
-// Registrar el manejador
-add_action('admin_post_mlp_export_diagnostic_report', 'mlp_handle_admin_post_export');
 
 // ============================================================================
 // 9. HOOK DE ADMIN-POST PARA DEBUG MODE (OPCIONAL)

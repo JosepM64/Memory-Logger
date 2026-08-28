@@ -1,6 +1,6 @@
 # Memory Logger Pro — Llista de tasques de millora
 
-> Document intern amb les millores detectades a l'anàlisi del codi (v13.2.0).
+> Document intern amb les millores detectades a l'anàlisi del codi (v13.3.0).
 > Criteris que s'han de mantenir sempre: **simplicitat, utilitat, SoC (Separació de Concerns)** i **no carregar el servidor**.
 > Marca amb `[x]` cada tasca quan estigui feta.
 
@@ -24,12 +24,12 @@
 
 ## Fase 2 — Refactor lleuger (SoC)
 
-- [ ] **Parser de log únic** — Crear `mlp_parse_log_line()` i substituir els ≥6 parsers duplicats: `core-logic.php:571`, `utils.php:1335`, `admin-logic.php:668`, `tab-dashboard.php:548`, `tab-statistics.php:233`...
-- [ ] **Neteja de caché única** — Crear `mlp_purge_cache()` i unificar les 5 neteges duplicades: `utils.php:666`, `admin-logic.php:450/476/429`, `ajax-logic.php:639`.
-- [ ] **Exportació unificada** — Deixar 1 handler + 1 nonce. Eliminar els duplicats: `memory-logger.php:389` + `admin-logic.php:625/743/786` + `ajax-logic.php:493` (3 fan exactament el mateix, amb 3 nonces diferents).
-- [ ] **Arreglar bug "Integritat Core"** — `ajax-logic.php:343`: `mlp_ajax_check_file_integrity()` retorna `"✅ Núcleo verificado"` hardcoded. Fer que executi `mlp_check_file_integrity()` de veritat.
-- [ ] **Usar helper de visitants** — Substituir el comptatge duplicat de `tab-dashboard.php:236` i `tab-diagnostic.php:126` per `mlp_process_visitor_stats()` (`utils.php:903`).
-- [ ] **Esborrar codi mort** — `MLP_ADMIN_EMAIL`, `mlp_log_plugin_errors()` (mai hookejat), `mlp_check_large_error_log()` (mai hookejat), `mlp_get_cached()` (mai usat), profiling (`mlp_start_plugin_profiling`, `mlp_identify_plugin_by_request`) i stubs buits a `ajax-logic.php:670-680`.
+- [x] **Parser de log únic** — Crear `mlp_parse_log_line()` i substituir els ≥6 parsers duplicats: `core-logic.php:571`, `utils.php:1335`, `admin-logic.php:668`, `tab-dashboard.php:548`, `tab-statistics.php:233`... *(`mlp_parse_log_line()` ja existia a utils.php:900 i 4 llocs ja l'usaven; substituït el parseig manual de `mlp_group_stats_by_visitor` i corregit un bug latent de clau `$row['DATE']` → `$row['date']` a core-logic.php:609.)*
+- [x] **Neteja de caché única** — Crear `mlp_purge_cache()` i unificar les 5 neteges duplicades: `utils.php:666`, `admin-logic.php:450/476/429`, `ajax-logic.php:639`. *(`mlp_purge_cache()` ja existia a utils.php:953; ara el fan servir `mlp_reset_to_defaults()`, `mlp_clear_logs_and_cache()`, `mlp_refresh_system_health()` i `mlp_ajax_refresh_health()`. L'optimize DB conserva el seu comptador propi.)*
+- [x] **Exportació unificada** — Deixar 1 handler + 1 nonce. Eliminar els duplicats: `memory-logger.php:389` + `admin-logic.php:625/743/786` + `ajax-logic.php:493` (3 fan exactament el mateix, amb 3 nonces diferents). *(Eliminats `mlp_handle_admin_post_export`, `mlp_export_diagnostic_report_handler` i `mlp_handle_direct_export_report` + els add_action i nonces morts (`exportReportNonce`, `exportDirectNonce`, `$export_nonce`). Només queda el handler AJAX `mlp_ajax_export_diagnostic_report` amb el nonce `mlp_export_diagnostic_report_nonce`, que és el que usa el JS.)*
+- [x] **Arreglar bug "Integritat Core"** — `ajax-logic.php:343`: `mlp_ajax_check_file_integrity()` retorna `"✅ Núcleo verificado"` hardcoded. Fer que executi `mlp_check_file_integrity()` de veritat. *(Ja estava arreglat al codi actual: crida `mlp_check_file_integrity()` i mostra els issues reals.)*
+- [x] **Usar helper de visitants** — Substituir el comptatge duplicat de `tab-dashboard.php:236` i `tab-diagnostic.php:126` per `mlp_process_visitor_stats()` (`utils.php:903`). *(Ja estava fet: les 3 vistes — dashboard, diagnostic i statistics — ja usen el helper.)*
+- [x] **Esborrar codi mort** — `MLP_ADMIN_EMAIL`, `mlp_log_plugin_errors()` (mai hookejat), `mlp_check_large_error_log()` (mai hookejat), `mlp_get_cached()` (mai usat), profiling (`mlp_start_plugin_profiling`, `mlp_identify_plugin_by_request`) i stubs buits a `ajax-logic.php:670-680`. *(Eliminats tots: `mlp_log_plugin_errors`, `mlp_check_large_error_log`, `mlp_get_cached`, `mlp_start_plugin_profiling` + `mlp_end_plugin_profiling`, `mlp_identify_plugin_by_request` i els 3 stubs AJAX buits.)*
 - [x] **Unificar versions als docblocks** — Els arxius diuen "13.2.0" als docblocks i el header és coherent (tots els arxius actualitzats a v13.2.0).
 
 ---

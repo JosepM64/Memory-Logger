@@ -1,7 +1,7 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Vista Estadísticas (Pestaña 2)
- * Restauración integral v13.2.0 con todas las secciones visuales y lógicas
+ * Memory Logger Pro v13.3.0 - Vista Estadísticas (Pestaña 2)
+ * Restauración integral v13.3.0 con todas las secciones visuales y lógicas
  */
 
 if (!defined('ABSPATH')) {

@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Funciones de Utilidad
+ * Memory Logger Pro v13.3.0 - Funciones de Utilidad
  *
  * Funciones auxiliares generales y reutilizables
  * Optimizado para PHP 8.2+ con tipado estricto
@@ -21,30 +21,6 @@ if (!function_exists('mlp_safe')) {
             return esc_html($text);
         }
         return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
-    }
-}
-
-if (!function_exists('mlp_get_cached')) {
-    function mlp_get_cached($key, $callback, $ttl = 300) {
-        $cache_key = 'mlp_cache_' . $key;
-        if (function_exists('get_transient') && function_exists('set_transient')) {
-            $data = get_transient($cache_key);
-            if ($data === false) {
-                $data = call_user_func($callback);
-                set_transient($cache_key, $data, (int)$ttl);
-            }
-            return $data;
-        }
-        static $cache = [];
-        if (isset($cache[$cache_key])) {
-            $entry = $cache[$cache_key];
-            if ((time() - $entry['time']) < (int)$ttl) {
-                return $entry['value'];
-            }
-        }
-        $value = call_user_func($callback);
-        $cache[$cache_key] = ['time' => time(), 'value' => $value];
-        return $value;
     }
 }
 
@@ -1276,81 +1252,6 @@ if (!function_exists('mlp_get_visitor_summary')) {
 }
 
 /**
- * Iniciar profiling ligero para identificar plugins lentos (NUEVO v12.8.0)
- * Debe llamarse al inicio del hook 'plugins_loaded'
- *
- * @return float Tiempo de inicio en microsegundos
- */
-if (!function_exists('mlp_start_plugin_profiling')) {
-    function mlp_start_plugin_profiling(): float {
-        return microtime(true);
-    }
-}
-
-/**
- * Finalizar profiling de plugins y calcular tiempo (NUEVO v12.8.0)
- *
- * @param float $start_time Tiempo devuelto por mlp_start_plugin_profiling()
- * @return array Información del profiling ['time' => float, 'plugins_loaded' => bool]
- */
-if (!function_exists('mlp_end_plugin_profiling')) {
-    function mlp_end_plugin_profiling(float $start_time): array {
-        $end_time = microtime(true);
-        return [
-            'time' => round(($end_time - $start_time) * 1000, 2), // en milisegundos
-            'plugins_loaded' => function_exists('wp_get_active_and_valid_plugins'),
-            'timestamp' => $end_time
-        ];
-    }
-}
-
-/**
- * Identificar plugin activo por ruta/URL (NUEVO v12.8.0)
- * Analiza la URL para detectar qué plugin puede estar generando la petición
- *
- * @param string $request_uri URI de la petición
- * @return array Información del plugin detectado ['plugin' => 'name', 'confidence' => 'high|medium|low']
- */
-if (!function_exists('mlp_identify_plugin_by_request')) {
-    function mlp_identify_plugin_by_request(string $request_uri): array {
-        // Patrones comunes de plugins por URL
-        $plugin_patterns = [
-            'wp-json/wp/v2/users' => ['plugin' => 'REST API', 'confidence' => 'high'],
-            'wp-json/' => ['plugin' => 'REST API', 'confidence' => 'high'],
-            'admin-ajax.php' => ['plugin' => 'AJAX', 'confidence' => 'high'],
-            'wp-admin/admin-ajax.php' => ['plugin' => 'AJAX', 'confidence' => 'high'],
-            'wc-api' => ['plugin' => 'WooCommerce', 'confidence' => 'high'],
-            'wp-json/woocommerce' => ['plugin' => 'WooCommerce', 'confidence' => 'high'],
-            'edd-api' => ['plugin' => 'Easy Digital Downloads', 'confidence' => 'high'],
-            'contact-form-7' => ['plugin' => 'Contact Form 7', 'confidence' => 'medium'],
-            'wpforms' => ['plugin' => 'WPForms', 'confidence' => 'medium'],
-            'elementor' => ['plugin' => 'Elementor', 'confidence' => 'medium'],
-            'divi' => ['plugin' => 'Divi', 'confidence' => 'medium'],
-            'woocommerce' => ['plugin' => 'WooCommerce', 'confidence' => 'medium'],
-            'jetpack' => ['plugin' => 'Jetpack', 'confidence' => 'medium'],
-            'wordfence' => ['plugin' => 'Wordfence', 'confidence' => 'medium'],
-            'sucuri' => ['plugin' => 'Sucuri', 'confidence' => 'medium'],
-            'gravityforms' => ['plugin' => 'Gravity Forms', 'confidence' => 'medium'],
-            'polylang' => ['plugin' => 'Polylang', 'confidence' => 'medium'],
-            'wpml' => ['plugin' => 'WPML', 'confidence' => 'medium'],
-            'yoast' => ['plugin' => 'Yoast SEO', 'confidence' => 'low'],
-            'rankmath' => ['plugin' => 'Rank Math', 'confidence' => 'low'],
-            'autoptimize' => ['plugin' => 'Autoptimize', 'confidence' => 'low'],
-            'wp-rocket' => ['plugin' => 'WP Rocket', 'confidence' => 'low'],
-            'litespeed' => ['plugin' => 'LiteSpeed Cache', 'confidence' => 'low'],
-        ];
-
-        foreach ($plugin_patterns as $pattern => $info) {
-            if (str_contains($request_uri, $pattern)) {
-                return $info;
-            }
-        }
-
-        return ['plugin' => 'Core/Theme', 'confidence' => 'low'];
-    }
-}
-
-/**
  * Agrupar estadísticas por tipo de visitante (NUEVO v12.8.0)
  * Procesa los logs y agrupa métricas por: humano, bot, unknown
  *
@@ -1367,25 +1268,17 @@ if (!function_exists('mlp_group_stats_by_visitor')) {
         ];
 
         foreach ($lines as $l) {
-            if (!str_contains($l, 'DATE:')) continue;
-
-            // Parsear línea
-            $row = [];
-            foreach (explode(' | ', $l) as $x) {
-                $kv = explode(':', $x, 2);
-                if (count($kv) == 2) $row[trim($kv[0])] = trim($kv[1]);
-            }
-
+            $row = mlp_parse_log_line($l);
             if (empty($row)) continue;
 
-            $visitor = mlp_identify_visitor_type($row['UA'] ?? '');
+            $visitor = mlp_identify_visitor_type($row['ua'] ?? '');
             $type = $visitor['type'];
             $bot_name = $visitor['name'];
 
-            $mem = (float)($row['MEM'] ?? 0);
-            $time = (float)($row['TIME'] ?? 0);
-            $cpu = (float)($row['CPU'] ?? 0);
-            $sql = (int)($row['SQL'] ?? 0);
+            $mem = (float)($row['mem'] ?? 0);
+            $time = (float)($row['time'] ?? 0);
+            $cpu = (float)($row['cpu'] ?? 0);
+            $sql = (int)($row['sql'] ?? 0);
 
             // Actualizar estadísticas por tipo
             if (isset($stats[$type])) {

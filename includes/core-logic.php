@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Core Logic
+ * Memory Logger Pro v13.3.0 - Core Logic
  * 
  * Funciones principales del plugin: monitoreo, logging, detección de errores y análisis profundo.
  * Incluye lógica avanzada para Hosting, Base de Datos y Patrones de Error.
@@ -606,7 +606,7 @@ function mlp_get_advanced_stats(): array {
 
             // Solo guardar datos para gráficos de los últimos 200 puntos para no saturar JSON
             if ($total <= 200 || rand(1, 10) == 1) { // Sampling para gráficos si hay muchos datos
-                $stats['labels'][] = substr($row['DATE']??'', 11, 8); // Solo hora
+                $stats['labels'][] = substr($row['date']??'', 11, 8); // Solo hora
                 $stats['memory_data'][] = $m;
                 $stats['sql_data'][] = $s;
                 $stats['time_data'][] = $t;
@@ -1252,34 +1252,6 @@ function mlp_detect_fatal_errors(): void {
         );
         @file_put_contents(MLP_LOG_FILE, $log_entry, FILE_APPEND);
     }
-}
-/**
- * Registrar errores de plugins específicos (IMPLEMENTADA v12.8.0)
- * Hook para capturar errores de plugins durante la ejecución
- */
-function mlp_log_plugin_errors(): void {
-    $error = error_get_last();
-    
-    if (!$error || !in_array($error['type'], [E_ERROR, E_WARNING, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR], true)) {
-        return;
-    }
-    
-    $message = sprintf(
-        "[%s] %s en %s:%d",
-        date('Y-m-d H:i:s'),
-        $error['message'],
-        $error['file'],
-        $error['line']
-    );
-    
-    // Detectar si es de un plugin
-    if (str_contains($error['file'], 'wp-content/plugins')) {
-        preg_match('/wp-content\/plugins\/([^\/]+)/', $error['file'], $matches);
-        $plugin = $matches[1] ?? 'unknown';
-        $message = "[PLUGIN:{$plugin}] " . $message;
-    }
-    
-    @file_put_contents(MLP_LOG_FILE, $message . "\n", FILE_APPEND);
 }
 
 /**

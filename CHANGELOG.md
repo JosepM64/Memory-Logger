@@ -1,5 +1,13 @@
 Memory Logger Pro - Changelog
 
+## 13.3.0 - 2026-08-28
+- Implementada Fase 2 de mejoras: refactor ligero de SoC
+- Neteja de caché unificada: todas las limpiezas usan `mlp_purge_cache()`
+- Eliminado código muerto: `mlp_log_plugin_errors()`, `mlp_check_large_error_log()`, `mlp_get_cached()`, profiling y stubs AJAX vacíos
+- Parser de log único: `mlp_group_stats_by_visitor()` ahora usa `mlp_parse_log_line()` (corregido bug de etiquetas de gráficos vacías)
+- Exportación unificada: 1 solo handler AJAX + 1 nonce (eliminados 3 handlers admin-post duplicados)
+- Eliminada colisión de hooks en `admin_post_mlp_export_diagnostic_report`
+
 ## 13.2.0 - 2026-08-27
 - Implementada Fase 1 de mejoras: datos reales y reducción de carga de servidor
 - Eliminados valores hardcoded que mostraban datos falsos en el dashboard

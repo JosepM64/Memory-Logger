@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Vista Diagnóstico y Seguridad (Pestaña 3)
+ * Memory Logger Pro v13.3.0 - Vista Diagnóstico y Seguridad (Pestaña 3)
  * Versión OPTIMIZADA con correcciones de bugs y mejor rendimiento
  */
 
@@ -9,7 +9,7 @@ if (!defined('ABSPATH')) {
 }
 
 /**
- * Renderizar la vista de Diagnóstico y Seguridad - VERSIÓN OPTIMIZADA v13.2.0
+ * Renderizar la vista de Diagnóstico y Seguridad - VERSIÓN OPTIMIZADA v13.3.0
  */
 function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $calibration, array $health): void {
     // Detectar navegador para UX adaptativa
@@ -32,7 +32,6 @@ function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $cal
         require_once ABSPATH . 'wp-includes/pluggable.php';
     }
     
-    $export_nonce = wp_create_nonce('mlp_export_diagnostic_report_nonce');
     $tools_nonce = wp_create_nonce('mlp_lazy_load_diagnostic_nonce');
     $security_nonce = wp_create_nonce('mlp_lazy_load_security_nonce');
     $clear_nonce = wp_create_nonce('mlp_clear_all_logs_cache_nonce');

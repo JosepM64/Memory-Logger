@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Vista Dashboard (Pestaña 1)
+ * Memory Logger Pro v13.3.0 - Vista Dashboard (Pestaña 1)
  * Restaurado íntegramente con todos los botones, ayuda y columnas originales
  * MEJORADO: Añadido Security Score y Visitor Stats
  */

@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - Lógica de Administración
+ * Memory Logger Pro v13.3.0 - Lógica de Administración
  *
  * Manejo de menús, páginas de admin y formularios
  * Optimizado para PHP 8.2+ con tipado estricto
@@ -98,8 +98,6 @@ function mlp_admin_enqueue_scripts(string $hook): void {
         'lazyLoadSecurityNonce' => wp_create_nonce('mlp_lazy_load_security_nonce'),
         'lazyLoadDiagnosticNonce' => wp_create_nonce('mlp_lazy_load_diagnostic_nonce'),
         'exportDiagnosticNonce' => wp_create_nonce('mlp_export_diagnostic_report_nonce'),
-        'exportReportNonce' => wp_create_nonce('mlp_export_diagnostic_ajax_nonce'),
-        'exportDirectNonce' => wp_create_nonce('mlp_export_diagnostic_action'),
         'hosting_type' => $hosting_info['type'],
         'hosting_provider' => $hosting_info['provider'],
         'cpu_ratio' => round($hosting_info['cpu_share_ratio'] * 100, 1),
@@ -135,8 +133,6 @@ function mlp_register_admin_hooks(): void {
 
     // Handlers para exportación
     add_action('admin_post_mlp_export_csv', 'mlp_export_csv_handler');
-    add_action('admin_post_mlp_export_diagnostic_report', 'mlp_export_diagnostic_report_handler');
-    add_action('admin_post_mlp_export_diagnostic_report_direct', 'mlp_handle_direct_export_report');
 }
 
 /* =========================================================================
@@ -429,14 +425,7 @@ function mlp_render_tab_diagnostic(array $opts, array $system_data): void {
 function mlp_reset_to_defaults(): array {
     $defaults = mlp_get_options();
 
-    // Limpiar transients
-    delete_transient('mlp_system_health');
-    delete_transient('mlp_cpu_calibration_' . gethostname());
-
-    // Limpiar transients de logs
-    global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_logs_%'");
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_advanced_stats_%'");
+    mlp_purge_cache();
 
     update_option('memory_logger_options', $defaults);
     return $defaults;
@@ -452,15 +441,7 @@ function mlp_clear_logs_and_cache(): void {
         @file_put_contents(MLP_LOG_FILE, '');
     }
 
-    global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_logs_%'");
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_advanced_stats_%'");
-
-    // Limpiar cache específicos
-    delete_transient('mlp_system_health');
-    delete_transient('mlp_cpu_calibration_' . gethostname());
-    delete_transient('mlp_security_scan_' . md5(MLP_PATH));
-    delete_transient('mlp_quick_security_scan_' . md5(MLP_PATH));
+    mlp_purge_cache();
 
     // Limpiar opción de alertas si existe
     if (get_option('mlp_alert_config')) {
@@ -474,16 +455,7 @@ function mlp_clear_logs_and_cache(): void {
  * @return void
  */
 function mlp_refresh_system_health(): void {
-    delete_transient('mlp_system_health');
-    delete_transient('mlp_cpu_calibration_' . gethostname());
-
-    global $wpdb;
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_logs_%'");
-    $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_advanced_stats_%'");
-
-    // Limpiar caché de opciones específicas
-    delete_transient('mlp_security_scan_' . md5(MLP_PATH));
-    delete_transient('mlp_quick_security_scan_' . md5(MLP_PATH));
+    mlp_purge_cache();
 
     // Limpiar opción de alertas si existe
     if (get_option('mlp_alert_config')) {
@@ -594,26 +566,6 @@ if ($errors === false) {
     echo '</ul>';
     echo '<p><a href="' . admin_url('admin.php?page=memory-log-viewer&tab=diagnostic') . '" class="button button-primary">🔍 Ver diagnóstico completo</a></p>';
     echo '</div>';
-}
-
-/**
- * Mostrar notificación de log de errores grande
- *
- * @return void
- */
-function mlp_check_large_error_log(): void {
-    if (!file_exists(MLP_ERROR_LOG_FILE)) {
-        return;
-    }
-
-    $error_log_size = filesize(MLP_ERROR_LOG_FILE);
-    if ($error_log_size > 5 * 1024 * 1024) { // Más de 5MB
-        echo '<div class="notice notice-warning">';
-        echo '<p><strong>📦 Log de errores muy grande (' . size_format($error_log_size, 2) . ')</strong></p>';
-        echo '<p>El archivo de errores está creciendo demasiado. Considera limpiarlo periódicamente.</p>';
-        echo '<p><a href="' . admin_url('admin.php?page=memory-log-viewer&tab=diagnostic') . '" class="button">🧹 Limpiar logs de errores</a></p>';
-        echo '</div>';
-    }
 }
 
 /* =========================================================================
@@ -738,92 +690,6 @@ function mlp_export_dangerous_peaks_csv(): void {
     exit;
 }
 
-/**
- * Handler para exportación de reporte diagnóstico
- *
- * @return void
- */
-function mlp_export_diagnostic_report_handler(): void {
-    if (!current_user_can('manage_options')) {
-        wp_die('Permisos insuficientes');
-    }
-
-    check_admin_referer('mlp_export_diagnostic_report_nonce', 'export_diagnostic_nonce');
-
-    try {
-        $format = sanitize_text_field($_POST['format'] ?? 'json');
-        $allowed_formats = ['json', 'html', 'txt', 'csv'];
-
-        if (!in_array($format, $allowed_formats, true)) {
-            $format = 'json';
-        }
-
-        $report_content = mlp_generate_diagnostic_report($format);
-        $filename = 'memory-logger-diagnostico-' . date('Y-m-d-His') . '.' . $format;
-
-        $mime_types = [
-            'json' => 'application/json',
-            'html' => 'text/html',
-            'txt' => 'text/plain',
-            'csv' => 'text/csv'
-        ];
-
-        header('Content-Type: ' . $mime_types[$format]);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        echo $report_content;
-        exit;
-
-    } catch (Exception $e) {
-        wp_die('Error al generar reporte: ' . $e->getMessage());
-    }
-}
-
-/**
- * Handler para descarga directa de reporte
- *
- * @return void
- */
-function mlp_handle_direct_export_report(): void {
-    if (!current_user_can('manage_options')) {
-        wp_die('Permisos insuficientes');
-    }
-
-    check_admin_referer('mlp_export_diagnostic_action', 'export_diagnostic_nonce');
-
-    try {
-        $format = sanitize_text_field($_POST['format'] ?? 'json');
-        $allowed_formats = ['json', 'html', 'txt', 'csv'];
-
-        if (!in_array($format, $allowed_formats, true)) {
-            $format = 'json';
-        }
-
-        $report_content = mlp_generate_diagnostic_report($format);
-        $filename = 'memory-logger-diagnostico-' . date('Y-m-d-His') . '.' . $format;
-
-        $mime_types = [
-            'json' => 'application/json',
-            'html' => 'text/html',
-            'txt' => 'text/plain',
-            'csv' => 'text/csv'
-        ];
-
-        header('Content-Type: ' . $mime_types[$format]);
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        header('Pragma: no-cache');
-        header('Expires: 0');
-
-        echo $report_content;
-        exit;
-
-    } catch (Exception $e) {
-        wp_die('Error al exportar: ' . $e->getMessage());
-    }
-}
-
 /* =========================================================================
    FUNCIONES AUXILIARES DE EXPORTACIÓN
    ========================================================================= */
@@ -838,7 +704,7 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
     $report_data = [
         'meta' => [
             'generated_at' => current_time('mysql'),
-            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.2.0',
+            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.3.0',
             'wordpress_version' => get_bloginfo('version'),
             'php_version' => phpversion(),
             'site_url' => get_site_url(),

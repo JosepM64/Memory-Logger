@@ -1,6 +1,6 @@
 <?php
 /**
- * Memory Logger Pro v13.2.0 - AJAX Logic
+ * Memory Logger Pro v13.3.0 - AJAX Logic
  * Manejo de peticiones AJAX robusto con carga dinámica de dependencias
  */
 
@@ -647,17 +647,8 @@ function mlp_ajax_refresh_health(): void {
         check_ajax_referer('mlp_clear_cache_nonce', 'security');
         mlp_ajax_require_admin();
         
-        // Invalidar TODOS los transients del plugin
-        global $wpdb;
-        
-        // Eliminar transients específicos del plugin
-        delete_transient('mlp_system_health_v9');
-        delete_transient('mlp_quick_security_scan_' . md5(MLP_PATH));
-        delete_transient('mlp_wp_plugins_analysis_v4_' . md5(MLP_PATH . get_bloginfo('version')));
-        
-        // Eliminar cualquier transient que comience con mlp_
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_mlp_%'");
-        $wpdb->query("DELETE FROM {$wpdb->options} WHERE option_name LIKE '_site_transient_mlp_%'");
+        // Invalidar todos los transients del plugin
+        mlp_purge_cache();
         
         // Forzar recalculado
         mlp_get_system_health(true); // true = forzar bypass de caché
@@ -668,19 +659,3 @@ function mlp_ajax_refresh_health(): void {
         ]);
     });
 }
-
-// Mantener handlers individuales por compatibilidad (pero sin uso en UI)
-/**
- * @deprecated Use mlp_ajax_optimize_db_complete instead
- */
-function mlp_ajax_clean_transients(): void {}
-
-/**
- * @deprecated Use mlp_ajax_optimize_db_complete instead
- */
-function mlp_ajax_optimize_db(): void {}
-
-/**
- * @deprecated Use mlp_ajax_refresh_health instead
- */
-function mlp_ajax_clear_plugin_cache(): void {}
