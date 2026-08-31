@@ -297,15 +297,15 @@ function mlp_ajax_analyze_error_patterns(): void {
             <?php if(!empty($res['recurrent_errors'])): ?>
             <div style="margin-bottom:15px;">
                 <h5 style="margin:10px 0 5px 0; font-size:12px; color:#1d2327;">🔄 Errores Recurrentes (últimos 7 días)</h5>
-                <div style="font-size:11px; background:#fff; padding:10px; border-radius:4px; max-height:200px; overflow-y:auto;">
+                <div style="font-size:11px; background:#fff; padding:10px; border-radius:4px; max-height:320px; overflow-y:auto;">
                     <?php foreach($res['recurrent_errors'] as $error): if($error['count'] > 1): ?>
                         <div style="padding:8px 0; border-bottom:1px solid #f0f0f0;">
                             <div style="display:flex; justify-content:space-between;">
                                 <span style="color:#d63638; font-weight:bold;">Repeticiones: <?php echo $error['count']; ?></span>
                                 <span style="color:#646970; font-size:10px;">Último: <?php echo $error['last_seen']; ?></span>
                             </div>
-                            <div style="color:#50575e; margin-top:3px; font-family:monospace; font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="<?php echo esc_attr($error['sample']); ?>">
-                                <?php echo esc_html(substr($error['sample'], 0, 100)); ?>...
+                            <div style="color:#50575e; margin-top:4px; font-family:monospace; font-size:10px; word-break:break-all; overflow-wrap:anywhere; white-space:pre-wrap; line-height:1.45; background:#f8f9fa; padding:6px 8px; border-radius:3px; border-left:2px solid #d63638;" title="<?php echo esc_attr($error['sample']); ?>">
+                                <?php echo esc_html($error['sample']); ?>
                             </div>
                         </div>
                     <?php endif; endforeach; ?>
@@ -470,6 +470,7 @@ function mlp_ajax_analyze_database(): void {
 
 function mlp_ajax_get_chart_data(): void {
     mlp_safe_ajax_response(function() {
+        check_ajax_referer('mlp_clear_cache_nonce', 'security');
         mlp_ajax_require_admin();
         require_once MLP_PATH . 'includes/core-logic.php';
         wp_send_json_success(mlp_get_advanced_stats());
@@ -592,7 +593,7 @@ function mlp_ajax_optimize_db_complete(): void {
             
             if ($engine === 'InnoDB') {
                 // InnoDB: ALTER TABLE para regenerar (más efectivo que OPTIMIZE)
-                $alter_result = $wpdb->query("ALTER TABLE {$table_name} ENGINE=InnoDB");
+                $alter_result = $wpdb->query("ALTER TABLE `{$table_name}` ENGINE=InnoDB");
                 if ($alter_result !== false) {
                     $optimized++;
                     $optimization_log[] = "✓ {$table_name} regenerada (InnoDB)";
@@ -602,7 +603,7 @@ function mlp_ajax_optimize_db_complete(): void {
                 }
             } else {
                 // MyISAM/otros: OPTIMIZE TABLE normal
-                $opt_result = $wpdb->query("OPTIMIZE TABLE {$table_name}");
+                $opt_result = $wpdb->query("OPTIMIZE TABLE `{$table_name}`");
                 if ($opt_result !== false) {
                     $optimized++;
                     $optimization_log[] = "✓ {$table_name} optimizada";

@@ -361,10 +361,12 @@ if (!function_exists('mlp_detect_server_type')) {
         $server_software_lower = strtolower($server_software);
 
         $server_patterns = [
-            'litespeed' => str_contains($server_software_lower, 'openlitespeed') ? 'OpenLiteSpeed' : 'LiteSpeed',
+            'openlitespeed' => 'OpenLiteSpeed',
+            'litespeed' => 'LiteSpeed',
             'apache' => 'Apache',
             'nginx' => 'Nginx',
-            'iis', 'microsoft-iis' => 'IIS',
+            'microsoft-iis' => 'IIS',
+            'iis' => 'IIS',
             'caddy' => 'Caddy',
             'lighttpd' => 'Lighttpd',
             'tomcat' => 'Tomcat',

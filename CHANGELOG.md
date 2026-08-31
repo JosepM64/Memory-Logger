@@ -1,5 +1,20 @@
 Memory Logger Pro - Changelog
 
+## 13.3.3 - 2026-08-31
+- Fix UI: errors recurrents ara amb `word-break:break-all` + `white-space:pre-wrap` i fons gris (mostra path complet)
+- Fix UI: `#quick-tools-results` amb `margin-bottom:50px` + `max-height:60vh` + `padding-bottom:30px` i `#wpfooter{position:relative}` evita solapament "Gràcies per crear amb WordPress"
+
+## 13.3.2 - 2026-08-31
+- Fix UX: botó "Ver diagnóstico completo" ara fa scroll + auto-executa "Patrones de Error" (`admin-logic.php:567`, `admin-script.js:313`, `tab-diagnostic.php:168`)
+- El botó ja no recarrega la pestanya si ja ets a Diagnóstico
+
+## 13.3.1 - 2026-08-31
+- Fix P0: `mlp_get_hosting_recommendations()` retornava array pla i trencava Diagnóstico (ara `$recs[]` amb `title`)
+- Fix P0: `mlp_detect_server_type()` patró `iis` mal format (`utils.php:363`)
+- Fix P0: `mlp_detect_fatal_errors()` ara amb `LOCK_EX` + `mlp_ajax_get_chart_data()` amb `check_ajax_referer`
+- Fix P0: `ALTER/OPTIMIZE TABLE` amb backticks + protecció `.htaccess` per `memory-usage.log`
+- Bump versió a 13.3.1
+
 ## 13.3.0 - 2026-08-28
 - Implementada Fase 2 de mejoras: refactor ligero de SoC
 - Neteja de caché unificada: todas las limpiezas usan `mlp_purge_cache()`

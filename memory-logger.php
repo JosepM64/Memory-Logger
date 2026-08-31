@@ -3,7 +3,7 @@
  * Plugin Name: Memory Logger Pro
  * Plugin URI: https://www.posicionamientowebysem.com/memory-logger-pro
  * Description: Auditor de rendimiento PRO universal: Gráficos, Memoria, Tiempo, CPU inteligente, Tamaño mejorado, Diagnóstico & Seguridad avanzado.
- * Version: 13.3.0
+ * Version: 13.3.3
  * Requires at least: 6.2
  * Requires PHP: 8.2
  * Author: Josep Maria Tapia Estarriaga
@@ -14,7 +14,7 @@
  * Domain Path: /languages
  *
  * @package Memory Logger Pro
- * @version 13.3.0
+ * @version 13.3.3
  */
 
 // ============================================================================
@@ -32,7 +32,7 @@ define('MLP_DEBUG_MODE', false);
 // ============================================================================
 // 3. CONSTANTES DEL PLUGIN
 // ============================================================================
-define('MLP_VERSION', '13.3.0');
+define('MLP_VERSION', '13.3.3');
 define('MLP_PATH', plugin_dir_path(__FILE__));
 define('MLP_URL', plugin_dir_url(__FILE__));
 define('MLP_MAIN_FILE', __FILE__);
@@ -71,7 +71,7 @@ function mlp_init_plugin(): void {
         define('WP_START_TIME', microtime(true));
     }
 
-    // Crear directorio de logs si no existe
+    // Crear directorio de logs si no existe + protección .htaccess
     $log_dir = dirname(MLP_LOG_FILE);
     if (!is_dir($log_dir)) {
         if (wp_mkdir_p($log_dir)) {
@@ -82,6 +82,8 @@ function mlp_init_plugin(): void {
             error_log('Memory Logger Pro v' . MLP_VERSION . ': ERROR - No se pudo crear el directorio de logs');
         }
     }
+    // Proteger logs contra acceso web directo
+    mlp_ensure_log_protection();
 
     // Inicializar opciones por defecto si no existen
     if (!get_option('memory_logger_options')) {
@@ -132,12 +134,33 @@ function mlp_init_plugin(): void {
 /**
  * Función de activación del plugin
  */
+function mlp_ensure_log_protection(): void {
+    $log_dir = dirname(MLP_LOG_FILE);
+    // .htaccess para Apache — protege solo los logs de MLP sin pisar .htaccess existente
+    $htaccess = $log_dir . '/.htaccess';
+    $rule = "<FilesMatch \"^(memory-usage|memory-logger-errors)\\.log$\">\nRequire all denied\n</FilesMatch>\n";
+    if (!file_exists($htaccess)) {
+        @file_put_contents($htaccess, $rule, LOCK_EX);
+    } else {
+        $existing = @file_get_contents($htaccess);
+        if ($existing !== false && strpos($existing, 'memory-usage') === false) {
+            @file_put_contents($htaccess, "\n" . $rule, FILE_APPEND | LOCK_EX);
+        }
+    }
+    // index.php anti-listing
+    $index = $log_dir . '/index.php';
+    if (!file_exists($index)) {
+        @file_put_contents($index, "<?php // Silence is golden\n", LOCK_EX);
+    }
+}
+
 function mlp_plugin_activation(): void {
     // Crear directorios de logs si no existen
     $log_dir = dirname(MLP_LOG_FILE);
     if (!is_dir($log_dir)) {
         wp_mkdir_p($log_dir);
     }
+    mlp_ensure_log_protection();
     
     // Programar eventos CRON usando funciones de core-logic
     if (function_exists('mlp_schedule_cleanup')) {

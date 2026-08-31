@@ -983,6 +983,10 @@
    15. ESTILOS PARA PESTAÑA DIAGNÓSTICO (v12.8.0)
    ========================================================================= */
 
+/* Fix footer WP que tapava els resultats (v13.3.2) */
+#wpfooter { position: relative !important; }
+#quick-tools-results { isolation: isolate; }
+
 /* Spinner para cargas en la pestaña de diagnóstico */
 .mlp-spinner {
     display: inline-block;

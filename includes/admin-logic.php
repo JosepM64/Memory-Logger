@@ -564,7 +564,7 @@ if ($errors === false) {
     }
 
     echo '</ul>';
-    echo '<p><a href="' . admin_url('admin.php?page=memory-log-viewer&tab=diagnostic') . '" class="button button-primary">🔍 Ver diagnóstico completo</a></p>';
+    echo '<p><a href="' . admin_url('admin.php?page=memory-log-viewer&tab=diagnostic&mlp_focus=errors') . '" id="mlp-notice-view-diagnostic" class="button button-primary">🔍 Ver diagnóstico completo</a></p>';
     echo '</div>';
 }
 

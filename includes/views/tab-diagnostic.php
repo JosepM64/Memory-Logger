@@ -185,13 +185,13 @@ function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $cal
 
     echo '</div>';
 
-    // Área única para resultados de herramientas
-    echo '<div id="quick-tools-results" style="margin-top:15px; display:none;">
+     // Área única para resultados de herramientas
+    echo '<div id="quick-tools-results" style="margin-top:15px; display:none; margin-bottom:50px; position:relative; z-index:1;">
             <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#f0f7ff; border-radius:4px 4px 0 0; border-bottom:1px solid #dcdcde;">
                 <strong id="quick-tools-title" style="font-size:11px; text-transform:uppercase; color:#0073aa;">Resultados</strong>
                 <button type="button" id="mlp-close-results" style="background:none; border:none; cursor:pointer; font-size:18px; color:#646970;">&times;</button>
             </div>
-            <div id="quick-tools-content" style="padding:15px; background:#fff; border:1px solid #dcdcde; border-top:none; border-radius:0 0 4px 4px; max-height:500px; overflow-y:auto;"></div>
+            <div id="quick-tools-content" style="padding:15px; background:#fff; border:1px solid #dcdcde; border-top:none; border-radius:0 0 4px 4px; max-height:60vh; overflow-y:auto; overflow-x:hidden; padding-bottom:30px;"></div>
           </div>
     </div>';
 

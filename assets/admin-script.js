@@ -311,6 +311,33 @@ jQuery(document).ready(function($) {
 
             $(document).on('click', '#mlp-close-results', function() { $('#quick-tools-results').hide(); });
 
+            // FIX: botó "Ver diagnóstico completo" de l'avís superior
+            $(document).on('click', '#mlp-notice-view-diagnostic', function(e) {
+                const url = new URL(this.href);
+                const isSameTab = url.searchParams.get('tab') === 'diagnostic' && window.location.href.includes('tab=diagnostic');
+                if (isSameTab) {
+                    e.preventDefault();
+                    const $errBtn = $('#mlp-tool-error-patterns');
+                    if ($errBtn.length) {
+                        $('html, body').animate({ scrollTop: $errBtn.offset().top - 80 }, 300);
+                        $errBtn.trigger('click');
+                        // netejar param de la URL sense recarregar
+                        history.replaceState(null, '', window.location.pathname + window.location.search.replace(/&?mlp_focus=errors/, ''));
+                    }
+                }
+            });
+            // Autolaunch si ve de l'avís (mlp_focus=errors)
+            (function() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('mlp_focus') === 'errors' && params.get('tab') === 'diagnostic') {
+                    const $errBtn = $('#mlp-tool-error-patterns');
+                    if ($errBtn.length) {
+                        setTimeout(function() { $errBtn.trigger('click'); $('html, body').animate({ scrollTop: $('#quick-tools-results').offset().top - 20 }, 400); }, 350);
+                        history.replaceState(null, '', window.location.pathname + '?' + params.toString().replace(/&?mlp_focus=errors/, '').replace(/^\?$/, '').replace(/^\?&/, '?'));
+                    }
+                }
+            })();
+
             // Exportar Reporte
             $(document).on('click', '#export-diagnostic-report', function(e) {
                 e.preventDefault();

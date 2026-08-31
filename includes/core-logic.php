@@ -880,9 +880,10 @@ function mlp_get_hosting_recommendations(): array {
     $recs = [];
 
     // 1. Versión PHP
-if (version_compare(PHP_VERSION, '8.2', '<')) {
-            return [
-                'description' => 'Estás usando PHP ' . PHP_VERSION . '. WordPress recomienda PHP 8.2+ para mejor rendimiento y seguridad.',
+    if (version_compare(PHP_VERSION, '8.2', '<')) {
+        $recs[] = [
+            'title' => 'Versión PHP Obsoleta',
+            'description' => 'Estás usando PHP ' . PHP_VERSION . '. WordPress recomienda PHP 8.2+ para mejor rendimiento y seguridad.',
             'action' => 'Actualizar PHP en panel de hosting'
         ];
     }
@@ -1250,11 +1251,11 @@ function mlp_detect_fatal_errors(): void {
             $error['file'],
             $error['line']
         );
-        @file_put_contents(MLP_LOG_FILE, $log_entry, FILE_APPEND);
+        @file_put_contents(MLP_LOG_FILE, $log_entry, FILE_APPEND | LOCK_EX);
     }
 }
 
-/**
+ /**
  * Función auxiliar para leer últimas líneas de archivo eficientemente
  */
 function mlp_tail_file($filepath, $lines = 100) {
