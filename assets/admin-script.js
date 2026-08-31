@@ -311,6 +311,26 @@ jQuery(document).ready(function($) {
 
             $(document).on('click', '#mlp-close-results', function() { $('#quick-tools-results').hide(); });
 
+            // Limpiar Logs & Caché (Diagnóstico)
+            $(document).on('click', '#clear-all-logs', function(e) {
+                e.preventDefault();
+                const $btn = $(this);
+                if (!confirm('🧹 ¿Limpiar todos los logs y la caché del plugin?\n\nSe borrará memory-usage.log y todos los transients mlp_*.')) return;
+                showLoading($btn, 'Limpiando...');
+                const ajaxurl2 = (typeof memoryLoggerPro !== 'undefined' && memoryLoggerPro.ajaxurl) ? memoryLoggerPro.ajaxurl : window.ajaxurl;
+                $.post(ajaxurl2, { action: 'mlp_clear_all_logs_cache', security: memoryLoggerPro.clearAllLogsNonce })
+                .done(function(res) {
+                    if (res && res.success) {
+                        $btn.text('✅ Limpiado');
+                        setTimeout(function(){ location.reload(); }, 600);
+                    } else {
+                        alert('❌ ' + ((res && res.data && res.data.message) ? res.data.message : 'Error desconocido'));
+                        restoreButton($btn);
+                    }
+                })
+                .fail(function(xhr, s, err){ alert('❌ Error de conexión: ' + err); restoreButton($btn); });
+            });
+
             // FIX: botó "Ver diagnóstico completo" de l'avís superior
             $(document).on('click', '#mlp-notice-view-diagnostic', function(e) {
                 const url = new URL(this.href);
