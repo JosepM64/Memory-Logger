@@ -1,5 +1,8 @@
 Memory Logger Pro - Changelog
 
+## 13.3.5 - 2026-09-06
+- Fix PHP Warning: `Undefined array key avg_mem/avg_time` a `tab-statistics.php:257` (usava `$data` sense avg)
+
 ## 13.3.4 - 2026-08-31
 - Fix JS: botó "Limpiar Logs & Caché" (`#clear-all-logs`) sense handler — ara crida `mlp_clear_all_logs_cache` amb `clearAllLogsNonce`
 - Verificats tots els botons: Dashboard 7/7, Estadísticas 2/2, Diagnóstico 8/8 operatius

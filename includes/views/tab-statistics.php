@@ -252,9 +252,11 @@ function mlp_render_statistics_view(array $opts, array $hosting_info, array $cal
                 
                 // Calcular promedios y ordenar por score
                 foreach ($url_stats as $url => $data) {
-                    $url_stats[$url]['avg_mem'] = $data['total_mem'] / $data['count'];
-                    $url_stats[$url]['avg_time'] = $data['total_time'] / $data['count'];
-                    $url_stats[$url]['score'] = ($data['avg_mem'] * 2) + ($data['avg_time'] * 10) + ($data['total_cpu'] / $data['count']);
+                    $avg_mem = $data['count'] > 0 ? $data['total_mem'] / $data['count'] : 0;
+                    $avg_time = $data['count'] > 0 ? $data['total_time'] / $data['count'] : 0;
+                    $url_stats[$url]['avg_mem'] = $avg_mem;
+                    $url_stats[$url]['avg_time'] = $avg_time;
+                    $url_stats[$url]['score'] = ($avg_mem * 2) + ($avg_time * 10) + ($data['total_cpu'] / $data['count']);
                 }
                 
                 uasort($url_stats, fn($a, $b) => $b['score'] <=> $a['score']);
