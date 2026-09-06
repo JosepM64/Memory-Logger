@@ -27,7 +27,8 @@ Plugin de WordPress para auditar el rendimiento de tu sitio: memoria, tiempo de 
 - Integridad del core: permisos de escritura y archivos críticos.
 - Análisis de base de datos: tamaño, overhead, autoload, transients caducados.
 - Recomendaciones de hosting: PHP, `memory_limit`, OPCache, extensiones, SSL, HSTS.
-- Exportación de informes en JSON, HTML, TXT y CSV.
+- Anàlisi de Cache: detecta WP Rocket + SG Optimizer, doble cache/CDN, exclusions TEC (`calendari-de-mogudes`) i Memcached OFF.
+- Exportación de informes en JSON, HTML, TXT y CSV (inclou `cache_analysis`).
 
 ## Requisitos
 

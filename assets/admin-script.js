@@ -271,6 +271,7 @@ jQuery(document).ready(function($) {
                 
                 const map = { 
                     'analyze-plugins': 'mlp_analyze_wordpress_plugins_optimized', 
+                    'cache': 'mlp_analyze_cache',
                     'error-patterns': 'mlp_analyze_error_patterns', 
                     'file-integrity': 'mlp_check_file_integrity', 
                     'database': 'mlp_analyze_database', 

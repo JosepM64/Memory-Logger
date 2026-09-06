@@ -9,11 +9,12 @@
 │
 └── /includes/              # Código PHP del plugin
     │
-    ├── admin-logic.php     # Lógica de la administración: menús, páginas, procesamiento de formularios, etc.
-    ├── ajax-logic.php      # Manejo de peticiones AJAX (pruebas, análisis, limpieza de caché, etc.)
-    ├── core-logic.php      # Funciones principales: monitoreo de CPU, memoria, logs, detección de errores, etc.
-    ├── security-logic.php  # Escaneo de seguridad: detección de plugins vulnerables, obsoletos, etc.
-    ├── utils.php           # Funciones auxiliares: conversión de memoria, sanitización de URLs, etc.
+├── admin-logic.php     # Lógica de la administración: menús, páginas, procesamiento de formularios, etc.
+├── ajax-logic.php      # Manejo de peticiones AJAX (pruebas, análisis, limpieza de caché, etc.)
+├── cache-logic.php     # Anàlisi de cache: WP Rocket + SG Optimizer + TEC (calendari)
+├── core-logic.php      # Funciones principales: monitoreo de CPU, memoria, logs, detección de errores, etc.
+├── security-logic.php  # Escaneo de seguridad: detección de plugins vulnerables, obsoletos, etc.
+├── utils.php           # Funciones auxiliares: conversión de memoria, sanitización de URLs, etc.
     │
     └── /views/             # Vistas (HTML/PHP) para las pestañas de administración
         ├── tab-dashboard.php   # Vista del Dashboard (pestaña 1)

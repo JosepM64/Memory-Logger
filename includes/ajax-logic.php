@@ -37,6 +37,7 @@ function mlp_register_ajax_hooks(): void {
         'mlp_check_file_integrity' => 'mlp_ajax_check_file_integrity',
         'mlp_analyze_database' => 'mlp_ajax_analyze_database',
         'mlp_get_hosting_recommendations' => 'mlp_ajax_get_hosting_recommendations',
+        'mlp_analyze_cache' => 'mlp_ajax_analyze_cache',
         'mlp_get_chart_data' => 'mlp_ajax_get_chart_data',
         'mlp_clear_all_logs_cache' => 'mlp_ajax_clear_all_logs_cache',
         'mlp_lazy_load_security' => 'mlp_ajax_lazy_load_security',
@@ -98,6 +99,67 @@ function mlp_ajax_run_test(): void {
 /**
  * AJAX: Recomendaciones de Hosting (Fijo para evitar cuelgues)
  */
+function mlp_ajax_analyze_cache(): void {
+    mlp_safe_ajax_response(function() {
+        check_ajax_referer('mlp_lazy_load_diagnostic_nonce', 'security');
+        mlp_ajax_require_admin();
+        require_once MLP_PATH . 'includes/cache-logic.php';
+        $res = mlp_analyze_cache_config();
+        ob_start();
+        ?>
+        <div style="margin-bottom:12px;">
+            <h4 style="margin:0 0 8px 0; display:flex; align-items:center; gap:8px;">
+                <span>⚡ Anàlisi de Cache</span>
+                <span style="font-size:11px; background:<?php echo esc_attr($res['score_color']); ?>; color:white; padding:2px 8px; border-radius:10px;"><?php echo $res['score']; ?>/100 - <?php echo esc_html($res['score_label']); ?></span>
+            </h4>
+            <?php if (!empty($res['detected'])): ?>
+            <div style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px;">
+                <?php foreach ($res['detected'] as $p): ?>
+                    <span style="padding:4px 8px; background:#e8f2fc; border-radius:12px; font-size:11px; border:1px solid #d0e3ff;"><?php echo esc_html($p['name']); ?> <small style="color:#646970;"><?php echo esc_html($p['version']); ?></small></span>
+                <?php endforeach; ?>
+            </div>
+            <?php else: ?>
+                <p style="font-size:11px; color:#646970;">Cap plugin de cache detectat.</p>
+            <?php endif; ?>
+
+            <?php if (!empty($res['issues'])): ?>
+                <div style="display:grid; gap:8px;">
+                <?php foreach ($res['issues'] as $iss): 
+                    $col = $iss['level']==='critical' ? '#d63638' : ($iss['level']==='warning' ? '#f0b849' : '#00a32a');
+                    $bg = $iss['level']==='critical' ? '#fcf0f1' : ($iss['level']==='warning' ? '#fff8e1' : '#f0fbf0');
+                ?>
+                    <div style="padding:10px; background:<?php echo $bg; ?>; border-left:4px solid <?php echo $col; ?>; border-radius:4px;">
+                        <strong style="font-size:12px; color:<?php echo $col; ?>;"><?php echo $iss['level']==='critical'?'🔴':'🟡'; ?> <?php echo esc_html($iss['title']); ?></strong>
+                        <p style="margin:4px 0; font-size:11px; color:#50575e;"><?php echo esc_html($iss['desc']); ?></p>
+                        <?php if (!empty($iss['fix'])): ?><div style="font-size:10px; color:#2271b1;"><strong>Fix:</strong> <?php echo esc_html($iss['fix']); ?></div><?php endif; ?>
+                    </div>
+                <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div style="padding:10px; background:#f0fbf0; border-left:4px solid #00a32a; border-radius:4px; font-size:11px;">✅ Configuració de cache òptima</div>
+            <?php endif; ?>
+
+            <?php if (!empty($res['recommendations'])): ?>
+            <div style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:4px;">
+                <strong style="font-size:11px;">💡 Recomanacions:</strong>
+                <ul style="margin:5px 0 0 15px; font-size:11px; color:#50575e;">
+                    <?php foreach ($res['recommendations'] as $r): ?><li><?php echo esc_html($r); ?></li><?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($res['wp_rocket'])): ?>
+            <details style="margin-top:10px; font-size:11px;">
+                <summary style="cursor:pointer; color:#2271b1;">Detall WP Rocket</summary>
+                <pre style="background:#f6f7f7; padding:8px; border-radius:4px; overflow:auto; font-size:10px; margin-top:6px;"><?php echo esc_html(json_encode(['cache_reject_uri'=>$res['wp_rocket']['cache_reject_uri']??[], 'purge_cron_interval'=>$res['wp_rocket']['purge_cron_interval']??'', 'cdn'=>$res['wp_rocket']['cdn']??0, 'cdn_type'=>$res['wp_rocket']['cdn_type']??'', 'minify_css'=>$res['wp_rocket']['minify_css']??0, 'minify_js'=>$res['wp_rocket']['minify_js']??0, 'delay_js'=>$res['wp_rocket']['delay_js']??0], JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES)); ?></pre>
+            </details>
+            <?php endif; ?>
+        </div>
+        <?php
+        wp_send_json_success(['html' => ob_get_clean(), 'score' => $res['score']]);
+    });
+}
+
 function mlp_ajax_get_hosting_recommendations(): void {
     mlp_safe_ajax_response(function() {
         check_ajax_referer('mlp_lazy_load_diagnostic_nonce', 'security');

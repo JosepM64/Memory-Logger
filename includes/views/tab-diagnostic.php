@@ -165,6 +165,7 @@ function mlp_render_diagnostic_view(array $opts, array $hosting_info, array $cal
 
     $tools = [
         'mlp-tool-analyze-plugins' => ['🔌', 'Análisis de Plugins', 'Vulnerabilidades, actualizaciones y salud de plugins'],
+        'mlp-tool-cache'           => ['⚡', 'Anàlisi de Cache', 'WP Rocket + SG Optimizer + conflictes TEC'],
         'mlp-tool-error-patterns' => ['🔍', 'Patrones de Error', 'Diagnóstico inteligente de logs de PHP'],
         'mlp-tool-file-integrity' => ['📁', 'Integridad Core', 'Escaneo de archivos núcleo de WordPress'],
         'mlp-tool-database'       => ['🗄️', 'Base de Datos', 'Optimización de tablas y wp_options'],

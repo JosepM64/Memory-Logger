@@ -704,7 +704,7 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
     $report_data = [
         'meta' => [
             'generated_at' => current_time('mysql'),
-            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.3.0',
+            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.3.6',
             'wordpress_version' => get_bloginfo('version'),
             'php_version' => phpversion(),
             'site_url' => get_site_url(),
@@ -714,6 +714,7 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
         'hosting_info' => function_exists('mlp_detect_hosting_type') ? mlp_detect_hosting_type() : [],
         'security_scan' => function_exists('mlp_run_quick_security_scan_optimized') ? mlp_run_quick_security_scan_optimized() : [],
         'error_analysis' => function_exists('mlp_enhanced_error_detection') ? mlp_enhanced_error_detection() : [],
+        'cache_analysis' => function_exists('mlp_analyze_cache_config') ? mlp_analyze_cache_config() : [],
         'active_plugins' => get_option('active_plugins', [])
     ];
 

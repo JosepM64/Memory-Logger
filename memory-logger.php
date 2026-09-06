@@ -3,7 +3,7 @@
  * Plugin Name: Memory Logger Pro
  * Plugin URI: https://www.posicionamientowebysem.com/memory-logger-pro
  * Description: Auditor de rendimiento PRO universal: Gráficos, Memoria, Tiempo, CPU inteligente, Tamaño mejorado, Diagnóstico & Seguridad avanzado.
- * Version: 13.3.5
+ * Version: 13.3.6
  * Requires at least: 6.2
  * Requires PHP: 8.2
  * Author: Josep Maria Tapia Estarriaga
@@ -32,7 +32,7 @@ define('MLP_DEBUG_MODE', false);
 // ============================================================================
 // 3. CONSTANTES DEL PLUGIN
 // ============================================================================
-define('MLP_VERSION', '13.3.5');
+define('MLP_VERSION', '13.3.6');
 define('MLP_PATH', plugin_dir_path(__FILE__));
 define('MLP_URL', plugin_dir_url(__FILE__));
 define('MLP_MAIN_FILE', __FILE__);
@@ -54,6 +54,7 @@ define('MLP_LOG_CLEANUP_BATCH_SIZE', 1000);    // Tamaño del lote de limpieza
 require_once MLP_PATH . 'includes/utils.php';
 require_once MLP_PATH . 'includes/core-logic.php';
 require_once MLP_PATH . 'includes/security-logic.php';
+require_once MLP_PATH . 'includes/cache-logic.php';
 require_once MLP_PATH . 'includes/admin-logic.php';
 require_once MLP_PATH . 'includes/ajax-logic.php';
 require_once MLP_PATH . 'includes/views/tab-dashboard.php';
