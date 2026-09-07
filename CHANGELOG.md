@@ -4,6 +4,10 @@ Memory Logger Pro - Changelog
 - Nou: Anàlisi de Cache `⚡` a Diagnòstic - detecta WP Rocket + SG Optimizer, doble CDN, exclusions `calendari-de-mogudes/mogudes` (alt CPU), Lifespan >6h, Memcached OFF, doble page-cache. Export inclou `cache_analysis`.
 - Inclou nou `includes/cache-logic.php` amb `mlp_analyze_cache_config()` i AJAX `mlp_analyze_cache`.
 
+## 13.3.6 - 2026-09-06
+- Fix report incomplet: `report.json/txt/html/csv` ara inclou `hosting_recommendations` (imagick/HSTS/opcache), `file_integrity` (debug.log), `database_analysis` i `plugins_analysis` (`admin-logic.php:703`)
+- Tots els formats 1:1 amb Diagnóstico
+
 ## 13.3.5 - 2026-09-06
 - Fix PHP Warning: `Undefined array key avg_mem/avg_time` a `tab-statistics.php:257` (usava `$data` sense avg)
 

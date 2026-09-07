@@ -701,6 +701,13 @@ function mlp_export_dangerous_peaks_csv(): void {
  * @return string Contenido del reporte
  */
 function mlp_generate_diagnostic_report(string $format = 'json'): string {
+    // Assegurar que core i security estiguin carregats per tenir totes les funcions
+    if (!function_exists('mlp_get_hosting_recommendations') && file_exists(MLP_PATH . 'includes/core-logic.php')) {
+        require_once MLP_PATH . 'includes/core-logic.php';
+    }
+    if (!function_exists('mlp_analyze_wordpress_plugins_unified') && file_exists(MLP_PATH . 'includes/security-logic.php')) {
+        require_once MLP_PATH . 'includes/security-logic.php';
+    }
     $report_data = [
         'meta' => [
             'generated_at' => current_time('mysql'),
@@ -712,9 +719,13 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
         ],
         'system_health' => function_exists('mlp_get_system_health') ? mlp_get_system_health() : [],
         'hosting_info' => function_exists('mlp_detect_hosting_type') ? mlp_detect_hosting_type() : [],
+        'hosting_recommendations' => function_exists('mlp_get_hosting_recommendations') ? mlp_get_hosting_recommendations() : [],
+        'file_integrity' => function_exists('mlp_check_file_integrity') ? mlp_check_file_integrity() : [],
+        'database_analysis' => function_exists('mlp_analyze_database') ? mlp_analyze_database() : [],
+        'plugins_analysis' => function_exists('mlp_analyze_wordpress_plugins_unified') ? mlp_analyze_wordpress_plugins_unified(['context' => 'quick']) : [],
+        'error_patterns' => function_exists('mlp_analyze_error_patterns') ? mlp_analyze_error_patterns() : [],
         'security_scan' => function_exists('mlp_run_quick_security_scan_optimized') ? mlp_run_quick_security_scan_optimized() : [],
         'error_analysis' => function_exists('mlp_enhanced_error_detection') ? mlp_enhanced_error_detection() : [],
-        'cache_analysis' => function_exists('mlp_analyze_cache_config') ? mlp_analyze_cache_config() : [],
         'active_plugins' => get_option('active_plugins', [])
     ];
 
@@ -774,13 +785,63 @@ function mlp_generate_html_report(array $data): string {
             <h2>🛡️ Seguridad</h2>
             <div class="section">
                 <?php if (!empty($data['security_scan'])): ?>
-                    <p><strong>Score:</strong> <?php echo $data['security_scan']['security_score'] ?? 0; ?>/100</p>
+                    <p><strong>Score:</strong> <?php echo $data['security_scan']['score'] ?? $data['security_scan']['security_score'] ?? 0; ?>/100</p>
+                    <?php if (!empty($data['security_scan']['issues'])): ?>
+                        <ul><?php foreach ($data['security_scan']['issues'] as $iss): ?><li><?php echo esc_html(is_array($iss) ? ($iss['description'] ?? json_encode($iss)) : $iss); ?></li><?php endforeach; ?></ul>
+                    <?php endif; ?>
+                <?php endif; ?>
+                <?php if (!empty($data['file_integrity']['issues'])): ?>
+                    <div class="alert-critical" style="padding:10px; margin-top:10px;">
+                        <strong>❌ Problemas de integridad:</strong>
+                        <ul><?php foreach ($data['file_integrity']['issues'] as $iss): ?><li><?php echo esc_html($iss); ?></li><?php endforeach; ?></ul>
+                    </div>
+                <?php elseif (isset($data['file_integrity'])): ?>
+                    <div class="alert-success" style="padding:8px; margin-top:10px;">✅ Integridad core verificada</div>
+                <?php endif; ?>
+            </div>
+
+            <h2>🏠 Recomendaciones de Hosting</h2>
+            <div class="section">
+                <?php if (!empty($data['hosting_recommendations'])): ?>
+                    <?php foreach ($data['hosting_recommendations'] as $r): ?>
+                        <div style="padding:10px; border-left:4px solid #2271b1; background:#f9f9f9; margin-bottom:8px;">
+                            <strong><?php echo esc_html($r['title'] ?? 'Recomendación'); ?></strong>
+                            <p style="margin:4px 0;"><?php echo esc_html($r['description'] ?? ''); ?></p>
+                            <small style="color:#2271b1;"><strong>Acción:</strong> <?php echo esc_html($r['action'] ?? ''); ?></small>
+                        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <div class="alert-success" style="padding:8px;">✅ Hosting cumple todos los requisitos</div>
+                <?php endif; ?>
+            </div>
+
+            <h2>🗄️ Base de Datos</h2>
+            <div class="section">
+                <?php if (!empty($data['database_analysis'])): ?>
+                    <p><strong>Salud:</strong> <?php echo $data['database_analysis']['health_score'] ?? 0; ?>/100 | <strong>Tablas:</strong> <?php echo $data['database_analysis']['tables_count'] ?? 0; ?> | <strong>Tamaño:</strong> <?php echo esc_html($data['database_analysis']['total_size'] ?? ''); ?> | <strong>Fragmentación:</strong> <?php echo $data['database_analysis']['fragmentation_rate'] ?? 0; ?>%</p>
+                    <?php if (!empty($data['database_analysis']['issues'])): ?>
+                        <ul><?php foreach ($data['database_analysis']['issues'] as $iss): ?><li><?php echo esc_html($iss['description'] ?? (is_string($iss) ? $iss : json_encode($iss))); ?></li><?php endforeach; ?></ul>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+
+            <h2>🔌 Plugins</h2>
+            <div class="section">
+                <?php if (!empty($data['plugins_analysis'])): ?>
+                    <p><strong>Total:</strong> <?php echo $data['plugins_analysis']['total_plugins'] ?? 0; ?> (<?php echo $data['plugins_analysis']['active_count'] ?? 0; ?> activos) | <strong>Score:</strong> <?php echo $data['plugins_analysis']['security_score'] ?? 0; ?>/100</p>
+                    <?php if (!empty($data['plugins_analysis']['outdated'])): ?>
+                        <p><strong>Actualizaciones pendientes (<?php echo count($data['plugins_analysis']['outdated']); ?>):</strong></p>
+                        <ul><?php foreach (array_slice($data['plugins_analysis']['outdated'],0,10) as $p): ?><li><?php echo esc_html($p['plugin'] ?? ''); ?> <?php echo esc_html($p['current'] ?? ''); ?> → <?php echo esc_html($p['latest'] ?? ''); ?></li><?php endforeach; ?></ul>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
 
             <h2>🚨 Errores</h2>
             <div class="section">
-                <p><strong>Total:</strong> <?php echo count($data['error_analysis'] ?? []); ?> errores detectados</p>
+                <p><strong>Total (enhanced):</strong> <?php echo count($data['error_analysis'] ?? []); ?> | <strong>Patrones:</strong> <?php echo $data['error_patterns']['total_errors'] ?? 0; ?> (críticos: <?php echo $data['error_patterns']['severity_counts']['critical'] ?? 0; ?>)</p>
+                <?php if (!empty($data['error_patterns']['error_sources'])): ?>
+                    <p><strong>Fuentes:</strong> <?php echo esc_html(implode(', ', array_keys(array_slice($data['error_patterns']['error_sources'],0,5)))); ?></p>
+                <?php endif; ?>
             </div>
 
             <p style="margin-top: 40px; text-align: center; color: #646970;">
@@ -803,18 +864,53 @@ function mlp_generate_text_report(array $data): string {
     $content = "MEMORY LOGGER PRO - REPORTE DE DIAGNÓSTICO\n";
     $content .= "==========================================\n";
     $content .= "Fecha: " . $data['meta']['generated_at'] . "\n";
-    $content .= "Sitio: " . $data['meta']['site_url'] . "\n\n";
+    $content .= "Sitio: " . $data['meta']['site_url'] . "\n";
+    $content .= "Plugin: v" . $data['meta']['plugin_version'] . " | WP: " . $data['meta']['wordpress_version'] . " | PHP: " . $data['meta']['php_version'] . "\n\n";
 
     $content .= "--- INFORMACIÓN DEL SISTEMA ---\n";
-    $content .= "WordPress: " . $data['meta']['wordpress_version'] . "\n";
-    $content .= "PHP: " . $data['meta']['php_version'] . "\n";
-    $content .= "Memoria: " . number_format($data['system_health']['memory_used'] ?? 0, 2) . " MB\n";
-    $content .= "DB Latencia: " . number_format($data['system_health']['db_lat'] ?? 0, 1) . " ms\n\n";
+    $content .= "Memoria: " . number_format($data['system_health']['memory_used'] ?? 0, 2) . " MB (" . ($data['system_health']['mem_percent'] ?? 0) . "%)\n";
+    $content .= "DB Latencia: " . number_format($data['system_health']['db_lat'] ?? 0, 1) . " ms | Tablas: " . ($data['database_analysis']['tables_count'] ?? $data['system_health']['table_count'] ?? 0) . " | Tamaño: " . ($data['database_analysis']['total_size'] ?? $data['system_health']['db_total_size_formatted'] ?? '') . "\n";
+    $content .= "Salud DB: " . ($data['database_analysis']['health_score'] ?? $data['system_health']['db_health_score'] ?? 0) . "/100 | Fragmentación: " . ($data['database_analysis']['fragmentation_rate'] ?? $data['system_health']['db_fragmentation'] ?? 0) . "%\n\n";
+
+    $content .= "--- HOSTING RECOMENDACIONES ---\n";
+    if (!empty($data['hosting_recommendations'])) {
+        foreach ($data['hosting_recommendations'] as $r) {
+            $content .= "- " . ($r['title'] ?? 'Recomendación') . ": " . ($r['description'] ?? '') . " | Acción: " . ($r['action'] ?? '') . "\n";
+        }
+    } else {
+        $content .= "Hosting cumple todos los requisitos.\n";
+    }
+    $content .= "\n";
+
+    $content .= "--- INTEGRIDAD CORE ---\n";
+    if (!empty($data['file_integrity']['issues'])) {
+        foreach ($data['file_integrity']['issues'] as $iss) $content .= "- " . $iss . "\n";
+    } else {
+        $content .= "Núcleo verificado.\n";
+    }
+    $content .= "\n";
+
+    $content .= "--- BASE DE DATOS ---\n";
+    if (!empty($data['database_analysis']['issues'])) {
+        foreach ($data['database_analysis']['issues'] as $iss) $content .= "- " . ($iss['description'] ?? (is_string($iss) ? $iss : json_encode($iss))) . "\n";
+    } else {
+        $content .= "Sin problemas detectados.\n";
+    }
+    $content .= "\n";
+
+    $content .= "--- PLUGINS ---\n";
+    $content .= "Total: " . ($data['plugins_analysis']['total_plugins'] ?? 0) . " (" . ($data['plugins_analysis']['active_count'] ?? 0) . " activos) Score: " . ($data['plugins_analysis']['security_score'] ?? 0) . "/100\n";
+    if (!empty($data['plugins_analysis']['outdated'])) {
+        foreach (array_slice($data['plugins_analysis']['outdated'],0,10) as $p) $content .= "- " . ($p['plugin'] ?? '') . " " . ($p['current'] ?? '') . " -> " . ($p['latest'] ?? '') . "\n";
+    }
+    $content .= "\n";
 
     $content .= "--- ERRORES DETECTADOS ---\n";
-    $content .= "Total: " . count($data['error_analysis']) . "\n\n";
-
-    $content .= "--- FIN DEL REPORTE ---\n";
+    $content .= "Enhanced: " . count($data['error_analysis'] ?? []) . " | Patrones: " . ($data['error_patterns']['total_errors'] ?? 0) . " (críticos: " . ($data['error_patterns']['severity_counts']['critical'] ?? 0) . ")\n";
+    if (!empty($data['error_patterns']['error_sources'])) {
+        $content .= "Fuentes: " . implode(', ', array_keys(array_slice($data['error_patterns']['error_sources'],0,5))) . "\n";
+    }
+    $content .= "\n--- FIN DEL REPORTE ---\n";
     $content .= "Generado por Memory Logger Pro v" . $data['meta']['plugin_version'] . "\n";
     $content .= "https://www.posicionamientowebysem.com\n";
 
@@ -829,30 +925,43 @@ function mlp_generate_text_report(array $data): string {
  */
 function mlp_generate_csv_report(array $data): string {
     $output = fopen('php://temp', 'r+');
-
-    // Header
     fputcsv($output, ['Section', 'Key', 'Value']);
-
-    // Metadata
     foreach ($data['meta'] as $key => $value) {
         fputcsv($output, ['Meta', $key, $value]);
     }
-
-    // System Health
     if (!empty($data['system_health'])) {
         foreach ($data['system_health'] as $key => $value) {
             fputcsv($output, ['System', $key, is_scalar($value) ? $value : json_encode($value)]);
         }
     }
-
-    // Errors
-    $error_count = count($data['error_analysis']);
-    fputcsv($output, ['Errors', 'count', $error_count]);
-
+    if (!empty($data['hosting_recommendations'])) {
+        foreach ($data['hosting_recommendations'] as $i => $r) {
+            fputcsv($output, ['HostingRec', $r['title'] ?? "rec_$i", ($r['description'] ?? '') . ' | Acción: ' . ($r['action'] ?? '')]);
+        }
+    } else {
+        fputcsv($output, ['HostingRec', 'status', 'OK']);
+    }
+    if (!empty($data['file_integrity']['issues'])) {
+        foreach ($data['file_integrity']['issues'] as $iss) fputcsv($output, ['Integrity', 'issue', $iss]);
+    } else {
+        fputcsv($output, ['Integrity', 'status', 'OK']);
+    }
+    if (!empty($data['database_analysis'])) {
+        fputcsv($output, ['DB', 'health_score', $data['database_analysis']['health_score'] ?? '']);
+        fputcsv($output, ['DB', 'fragmentation', $data['database_analysis']['fragmentation_rate'] ?? '']);
+        if (!empty($data['database_analysis']['issues'])) {
+            foreach ($data['database_analysis']['issues'] as $iss) fputcsv($output, ['DB', 'issue', $iss['description'] ?? json_encode($iss)]);
+        }
+    }
+    if (!empty($data['plugins_analysis'])) {
+        fputcsv($output, ['Plugins', 'score', $data['plugins_analysis']['security_score'] ?? '']);
+        fputcsv($output, ['Plugins', 'outdated_count', count($data['plugins_analysis']['outdated'] ?? [])]);
+    }
+    fputcsv($output, ['Errors', 'count_enhanced', count($data['error_analysis'] ?? [])]);
+    fputcsv($output, ['Errors', 'count_patterns', $data['error_patterns']['total_errors'] ?? 0]);
     rewind($output);
     $content = stream_get_contents($output);
     fclose($output);
-
     return $content;
 }
 

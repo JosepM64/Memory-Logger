@@ -14,7 +14,7 @@
  * Domain Path: /languages
  *
  * @package Memory Logger Pro
- * @version 13.3.5
+ * @version 13.3.6
  */
 
 // ============================================================================
