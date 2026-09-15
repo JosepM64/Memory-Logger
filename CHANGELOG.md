@@ -1,8 +1,10 @@
 Memory Logger Pro - Changelog
 
-## 13.3.6 - 2026-09-06
-- Nou: Anàlisi de Cache `⚡` a Diagnòstic - detecta WP Rocket + SG Optimizer, doble CDN, exclusions `calendari-de-mogudes/mogudes` (alt CPU), Lifespan >6h, Memcached OFF, doble page-cache. Export inclou `cache_analysis`.
-- Inclou nou `includes/cache-logic.php` amb `mlp_analyze_cache_config()` i AJAX `mlp_analyze_cache`.
+## 13.3.7 - 2026-09-15
+- Fix incoherència `security_scan 90 vs plugins 100` (opció B): `security_scan` ara hereta `plugins_score` + descomptes `uploads/WP_DEBUG/>20 plugins` (`security-logic.php:207`), afegeix `plugins_score/plugins_outdated` al JSON
+- Fix fals positiu `opcache`: `extension_loaded('opcache')` → `Zend OPcache` + `opcache_get_status` (`core-logic.php:963`)
+- Fix `transients_overhead_kb` mal nomenat (era `db_overhead`) → ara `transients_size_kb` + `db_overhead_kb` + alias (`core-logic.php:468`)
+- Fix `error_patterns`: `severity_counts` ara compta `thrown/exception/critical` i `last_error_date` suporta `DATE:` (`core-logic.php:740`)
 
 ## 13.3.6 - 2026-09-06
 - Fix report incomplet: `report.json/txt/html/csv` ara inclou `hosting_recommendations` (imagick/HSTS/opcache), `file_integrity` (debug.log), `database_analysis` i `plugins_analysis` (`admin-logic.php:703`)

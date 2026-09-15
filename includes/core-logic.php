@@ -465,6 +465,9 @@ function mlp_get_system_health(bool $force_refresh = false): array {
         'autoload_color' => $autoload_color,
         'transients_active' => (int)$active_transients,
         'transients_expired' => (int)$expired_transients,
+        // Fix: transients_overhead_kb era DB overhead mal nomenat — ara correcte + alias per compatibilitat
+        'transients_size_kb' => round((($db_analysis['transients_size_bytes'] ?? 0)) / 1024, 1),
+        'db_overhead_kb' => round((($db_analysis['overhead_size_bytes'] ?? 0)) / 1024, 1),
         'transients_overhead_kb' => round((($db_analysis['overhead_size_bytes'] ?? 0)) / 1024, 1),
         'theme' => wp_get_theme()->get('Name'),
         'plugins_count' => count((array)get_option('active_plugins', [])),
@@ -735,13 +738,16 @@ function mlp_analyze_error_patterns(): array {
     $recent_timestamp = time() - (7 * 24 * 60 * 60);
     
     foreach ($lines as $line) {
-        // Extraer fecha del error
+        // Extraer fecha — soporta "[06-Sep-2026 07:52:41 UTC]" y "DATE:2026-01-23 03:00:20"
         $date_match = [];
+        $error_date = null;
         if (preg_match('/^\[(.*?)\]/', $line, $date_match)) {
             $error_date = $date_match[1];
+        } elseif (preg_match('/DATE:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $line, $date_match)) {
+            $error_date = $date_match[1];
+        }
+        if ($error_date) {
             $patterns['last_error_date'] = $error_date;
-            
-            // Agrupar por día para timeline
             $day_ts = strtotime($error_date);
             if ($day_ts) {
                 $day = date('Y-m-d', $day_ts);
@@ -749,10 +755,8 @@ function mlp_analyze_error_patterns(): array {
                     $patterns['error_timeline'][$day] = 0;
                 }
                 $patterns['error_timeline'][$day]++;
-                
-                // Marcar como recurrente si es reciente
                 if ($day_ts > $recent_timestamp) {
-                    $error_key = md5(substr($line, 0, 200)); // Hash de la primera parte del error
+                    $error_key = md5(substr($line, 0, 200));
                     if (!isset($patterns['recurrent_errors'][$error_key])) {
                         $patterns['recurrent_errors'][$error_key] = [
                             'count' => 0,
@@ -767,9 +771,9 @@ function mlp_analyze_error_patterns(): array {
             }
         }
 
-        // Detectar tipo de error
+        // Detectar tipo de error — ampliado per cobrir "thrown/exception"
         $line_lower = strtolower($line);
-        if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse')) {
+        if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'thrown') || str_contains($line_lower, 'exception') || str_contains($line_lower, 'critical')) {
             $patterns['severity_counts']['critical']++;
         } elseif (str_contains($line_lower, 'warning')) {
             $patterns['severity_counts']['warning']++;
@@ -960,13 +964,17 @@ function mlp_get_hosting_recommendations(): array {
         ];
     }
 
-    // 9. Verificar PHP extensions de performance
-    $performance_ext = ['opcache', 'apcu', 'memcached', 'redis'];
+    // 9. Verificar PHP extensions de performance (opcache = Zend OPcache)
     $missing_perf_ext = [];
-    foreach ($performance_ext as $ext) {
+    foreach (['apcu', 'memcached', 'redis'] as $ext) {
         if (!extension_loaded($ext)) {
             $missing_perf_ext[] = $ext;
         }
+    }
+    // OPcache té nom especial
+    $has_opcache = extension_loaded('Zend OPcache') || (function_exists('opcache_get_status') && @opcache_get_status(false) !== false);
+    if (!$has_opcache) {
+        $missing_perf_ext[] = 'opcache';
     }
     if (!empty($missing_perf_ext)) {
         $recs[] = [

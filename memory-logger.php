@@ -3,7 +3,7 @@
  * Plugin Name: Memory Logger Pro
  * Plugin URI: https://www.posicionamientowebysem.com/memory-logger-pro
  * Description: Auditor de rendimiento PRO universal: Gráficos, Memoria, Tiempo, CPU inteligente, Tamaño mejorado, Diagnóstico & Seguridad avanzado.
- * Version: 13.3.6
+ * Version: 13.3.7
  * Requires at least: 6.2
  * Requires PHP: 8.2
  * Author: Josep Maria Tapia Estarriaga
@@ -14,7 +14,7 @@
  * Domain Path: /languages
  *
  * @package Memory Logger Pro
- * @version 13.3.6
+ * @version 13.3.7
  */
 
 // ============================================================================

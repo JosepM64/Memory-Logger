@@ -6,3 +6,5 @@ memory-logger-errors.log
 # Sistema
 .DS_Store
 Thumbs.db
+
+report.json

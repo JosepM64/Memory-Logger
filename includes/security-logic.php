@@ -216,8 +216,18 @@ if (!function_exists('mlp_run_quick_security_scan_optimized')) {
             return $cached;
         }
 
+        // Base = score profund de plugins (outdated*10) — opció B
+        $plugins_data = function_exists('mlp_analyze_wordpress_plugins_unified')
+            ? mlp_analyze_wordpress_plugins_unified(['context' => 'quick', 'cache_duration' => HOUR_IN_SECONDS])
+            : ['security_score' => 100, 'outdated' => [], 'active_count' => count((array)get_option('active_plugins', []))];
+        $score = (int)($plugins_data['security_score'] ?? 100);
         $issues = [];
-        $score = 100;
+        // Propagar outdated com a issues visibles al quick scan
+        if (!empty($plugins_data['outdated'])) {
+            foreach (array_slice($plugins_data['outdated'], 0, 3) as $o) {
+                $issues[] = 'Plugin desactualizado: ' . ($o['plugin'] ?? 'unknown') . ' ' . ($o['current'] ?? '') . ' → ' . ($o['latest'] ?? '');
+            }
+        }
 
         // Verificar permisos de archivos
         $upload_dir = wp_upload_dir();
@@ -232,7 +242,7 @@ if (!function_exists('mlp_run_quick_security_scan_optimized')) {
             $score -= 5;
         }
 
-        // Verificar plugins activos
+        // Verificar plugins activos (>20)
         $active_plugins = get_option('active_plugins', []);
         if (count($active_plugins) > 20) {
             $issues[] = 'Demasiados plugins activos (' . count($active_plugins) . ')';
@@ -240,9 +250,11 @@ if (!function_exists('mlp_run_quick_security_scan_optimized')) {
         }
 
         $result = [
-            'score' => max(0, $score),
+            'score' => max(0, min(100, $score)),
             'issues' => $issues,
             'scan_date' => current_time('mysql'),
+            'plugins_score' => (int)($plugins_data['security_score'] ?? 100),
+            'plugins_outdated' => count($plugins_data['outdated'] ?? []),
         ];
 
         set_transient($cache_key, $result, HOUR_IN_SECONDS);
