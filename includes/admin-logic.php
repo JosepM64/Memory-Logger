@@ -541,6 +541,13 @@ if ($errors === false) {
     $errors = function_exists('mlp_enhanced_error_detection') ? mlp_enhanced_error_detection() : [];
 }
     $critical_errors = array_filter($errors, static function($error) {
+        // Excloure alertes pròpies de DB (no són PHP crítics externs)
+        if (isset($error['message']) && str_contains($error['message'], 'Memory Logger Pro:') && str_contains($error['message'], 'problemas críticos de base de datos')) {
+            return false;
+        }
+        if (isset($error['source']) && $error['source'] === 'memory-logger-errors.log' && isset($error['message']) && str_contains($error['message'], 'database_analysis')) {
+            return false;
+        }
         return in_array($error['severity'], ['critical', 'high'], true);
     });
 

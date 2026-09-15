@@ -1,5 +1,8 @@
 Memory Logger Pro - Changelog
 
+## 13.3.9 - 2026-09-15
+- Fix permanent banner: exclou `Memory Logger Pro: problemas críticos de base de datos` del `notice` (`admin-logic.php:543`) — només `thrown/warning` externs (TEC)
+
 ## 13.3.8 - 2026-09-15
 - Fix `error_analysis` severitat: `SEVERITY:high` del `memory-logger-errors.log` ara `high` (abans `low`) + amplia `thrown/exception` a `critical` (`core-logic.php:1165`)
 
