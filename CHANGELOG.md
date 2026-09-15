@@ -1,5 +1,8 @@
 Memory Logger Pro - Changelog
 
+## 13.3.8 - 2026-09-15
+- Fix `error_analysis` severitat: `SEVERITY:high` del `memory-logger-errors.log` ara `high` (abans `low`) + amplia `thrown/exception` a `critical` (`core-logic.php:1165`)
+
 ## 13.3.7 - 2026-09-15
 - Fix incoherència `security_scan 90 vs plugins 100` (opció B): `security_scan` ara hereta `plugins_score` + descomptes `uploads/WP_DEBUG/>20 plugins` (`security-logic.php:207`), afegeix `plugins_score/plugins_outdated` al JSON
 - Fix fals positiu `opcache`: `extension_loaded('opcache')` → `Zend OPcache` + `opcache_get_status` (`core-logic.php:963`)

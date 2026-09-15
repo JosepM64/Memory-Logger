@@ -1163,14 +1163,24 @@ function mlp_enhanced_error_detection(): array {
             }
             
             $severity = 'low';
-            $line_lower = strtolower($line);
-            
-            if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'core error')) {
-                $severity = 'critical';
-            } elseif (str_contains($line_lower, 'warning') || str_contains($line_lower, 'exception')) {
-                $severity = 'high';
-            } elseif (str_contains($line_lower, 'notice') || str_contains($line_lower, 'deprecated')) {
-                $severity = 'medium';
+            // Prioritat: SEVERITY:high del propi MLP (DB) — més fiable que string matching
+            if (preg_match('/SEVERITY:(critical|high|medium|low)/i', $line, $sev_match)) {
+                $sev = strtolower($sev_match[1]);
+                $severity = match($sev) {
+                    'critical' => 'critical',
+                    'high' => 'high',
+                    'medium' => 'medium',
+                    default => 'low',
+                };
+            } else {
+                $line_lower = strtolower($line);
+                if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'core error') || str_contains($line_lower, 'thrown') || str_contains($line_lower, 'exception')) {
+                    $severity = 'critical';
+                } elseif (str_contains($line_lower, 'warning')) {
+                    $severity = 'high';
+                } elseif (str_contains($line_lower, 'notice') || str_contains($line_lower, 'deprecated')) {
+                    $severity = 'medium';
+                }
             }
             
             // Extraer información del error
