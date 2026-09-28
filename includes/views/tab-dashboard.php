@@ -43,11 +43,12 @@ function mlp_render_dashboard_view(
     $insight_bg = '#f8f9fa';
     $insight_border = '#646970';
     
-    // Calcular factores activos
+    // Calcular factores activos (v13.4.0: db_overhead_kb canònic, fallback legacy)
+    $db_overhead_kb = (float) ($health['db_overhead_kb'] ?? $health['transients_overhead_kb'] ?? 0);
     $active_factors = [];
     if ($health['db_fragmentation'] > 10) $active_factors[] = 'fragmentación';
     if ($health['autoload_mb'] > 0.8) $active_factors[] = 'autoload';
-    if ($health['transients_overhead_kb'] > 100) $active_factors[] = 'overhead';
+    if ($db_overhead_kb > 100) $active_factors[] = 'overhead';
     if ($health['db_size_mb'] > 100) $active_factors[] = 'tablas grandes';
     
     if (!empty($active_factors)) {
@@ -58,7 +59,7 @@ function mlp_render_dashboard_view(
         $insight_border = '#f0b849';
         
         // Añadir explicación según el factor principal
-        if (in_array('overhead', $active_factors) && $health['transients_overhead_kb'] > 1000) {
+        if (in_array('overhead', $active_factors) && $db_overhead_kb > 1000) {
             $insight .= " El overhead alto puede ser normal en tablas muy activas.";
         }
         if (in_array('fragmentation', $active_factors) && $health['db_fragmentation'] > 100) {
@@ -210,8 +211,8 @@ function mlp_render_dashboard_view(
     echo '<div>BD: ' . esc_html($health['db_total_size_formatted']) . '</div>';
     echo '<div>Tablas: ' . number_format((int)$health['table_count'], 0, ',', '.') . '</div>';
     echo '<div>Fragmentación: <span style="color:' . ($health['db_fragmentation'] > 10 ? '#d63638' : '#00a32a') . ';">' . number_format((float)$health['db_fragmentation'], 1, ',', '.') . '%</span></div>';
-    if (isset($health['transients_overhead_kb']) && $health['transients_overhead_kb'] > 0) {
-        echo '<div style="color:' . ($health['transients_overhead_kb'] > 100 ? '#d63638' : '#f0b849') . ';">Overhead: ' . number_format((float)$health['transients_overhead_kb'], 1, ',', '.') . ' KB</div>';
+    if ($db_overhead_kb > 0) {
+        echo '<div style="color:' . ($db_overhead_kb > 100 ? '#d63638' : '#f0b849') . ';">Overhead: ' . number_format($db_overhead_kb, 1, ',', '.') . ' KB</div>';
     }
     
     // Desglose de factores del health score (NUEVO v12.9.0)
@@ -220,7 +221,7 @@ function mlp_render_dashboard_view(
     $factors = [];
     if ($health['db_fragmentation'] > 10) $factors[] = 'Frag.';
     if ($health['autoload_mb'] > 0.8) $factors[] = 'Autoload';
-    if ($health['transients_overhead_kb'] > 100) $factors[] = 'Overhead';
+    if ($db_overhead_kb > 100) $factors[] = 'Overhead';
     if ($health['db_size_mb'] > 100) $factors[] = 'Tablas grandi';
     echo empty($factors) ? 'Sin penalizaciones' : implode(', ', $factors);
     echo '</div>';
@@ -305,7 +306,7 @@ function mlp_render_dashboard_view(
     echo '<button type="submit" name="reset_defaults" class="button button-secondary" style="margin-left:10px;">🔄 Restaurar valores por defecto</button>';
     echo '</div></form></div>';
 
-    // 5. AYUDA Y GUÍA COMPLETA (v12.9.0)
+    // 5. AYUDA Y GUÍA COMPLETA (v13.4.3)
     echo '<div style="margin:15px 0 5px 0;"><a href="#" class="ml-help-toggle button button-small" data-target="help-section-dashboard" data-toggle="help-section-dashboard" style="font-weight:600;">ℹ️ Ayuda y Guía Completa</a></div>';
     
     // Insight automático
@@ -360,11 +361,12 @@ function mlp_render_dashboard_view(
     echo '<ul style="margin:0; font-size:12px; list-style:none; padding:0;">';
     echo '<li style="margin-bottom:5px;">🚀 <strong>Auditoría Global:</strong> Ejecuta todos los escaneos y genera un score global (0-100).</li>';
     echo '<li style="margin-bottom:5px;">🔌 <strong>Análisis de Plugins:</strong> Actualizaciones pendientes, incompatibilidades, plugins abandonados.</li>';
-    echo '<li style="margin-bottom:5px;">🔍 <strong>Patrones de Error:</strong> Lee debug.log y error_log, agrupa por plugin/tema, timeline de 14 días.</li>';
+    echo '<li style="margin-bottom:5px;">⚡ <strong>Anàlisi de Cache:</strong> WP Rocket + SG Optimizer, conflictes de doble page-cache/CDN i exclusions TEC (calendari).</li>';
+echo '<li style="margin-bottom:5px;">🔍 <strong>Patrones de Error:</strong> Lee debug.log y error_log (ventana 2h/200 líneas), severidad critical/high/medium/low y lista reciente.</li>';
     echo '<li style="margin-bottom:5px;">📁 <strong>Integridad Core:</strong> Verifica permisos de wp-content, uploads y archivos críticos.</li>';
     echo '<li style="margin-bottom:5px;">🗄️ <strong>Base de Datos:</strong> Tamaño real, overhead, autoload, transitorios caducados.</li>';
     echo '<li style="margin-bottom:5px;">🏠 <strong>Recomendaciones de Hosting:</strong> PHP, memory_limit, OPCache, extensiones, SSL, HSTS.</li>';
-    echo '<li style="margin-bottom:5px;">📄 <strong>Exportar Reporte:</strong> Descarga en JSON, HTML o TXT para soporte técnico.</li>';
+    echo '<li style="margin-bottom:5px;">📄 <strong>Exportar Reporte:</strong> Descarga en JSON, HTML, TXT o CSV para soporte técnico.</li>';
     echo '<li style="margin-bottom:5px;">🧹 <strong>Limpiar Logs:</strong> Borra registros y caché del plugin.</li>';
     echo '</ul>';
     echo '</div>';

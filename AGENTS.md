@@ -3,7 +3,7 @@
 ## Projecte
 - **Plugin:** Memory Logger Pro — auditor rendiment WP (memòria, temps, CPU, SQL, pàgina, bots, plugins, BD, cache)
 - **Path:** `D:\Documents\Programació\memory-logger-pro`
-- **Versió actual:** `13.3.6` (2026-09-06) — veure `memory-logger.php:6,35` i `CHANGELOG.md`
+- **Versió actual:** `13.4.3` (2026-09-28) — veure `memory-logger.php:6,35` i `CHANGELOG.md`
 - **Requisits:** WordPress 6.2+, PHP 8.2+, instal·lació per FTP a `wp-content/plugins/memory-logger-pro` (no zip)
 - **Text Domain:** `memory-logger` — `languages/`
 
@@ -19,8 +19,8 @@ includes/
   utils.php              # Helpers sanitització, conversió memòria
   core-logic.php         # Monitoratge, logs, CPU, hosting detection
   security-logic.php     # Escaneig vulnerabilitats
-  cache-logic.php        # [13.3.6] mlp_analyze_cache_config(): WP Rocket + SG Optimizer + TEC
-  admin-logic.php        # Menús, pàgines, export JSON/HTML/TXT/CSV (cache_analysis inclòs)
+  cache-logic.php        # [13.4.0] mlp_analyze_cache_config(): WP Rocket + SG Optimizer + TEC (TTL 12h)
+  admin-logic.php        # Menús, pàgines, export JSON/HTML/TXT/CSV (cache_analysis inclòs, 1 scan errors)
   ajax-logic.php         # Handlers AJAX: mlp_analyze_cache, chart_data, clear_all...
   views/
     tab-dashboard.php    # P1 Dashboard
@@ -37,7 +37,8 @@ assets/
 3. **Diagnóstico:** score 0-100; tools: plugins, errors (14d), core integrity, DB (autoload/overhead), hosting recs, **⚡ Anàlisi de Cache** (13.3.6)
 
 ## Anàlisi de Cache (13.3.6)
-- **Funció:** `includes/cache-logic.php:18 mlp_analyze_cache_config(): array` — cache 5min `mlp_cache_analysis_*`, exportable via `admin-logic.php:703 report_data['cache_analysis']`
+- **Funció:** `includes/cache-logic.php:18 mlp_analyze_cache_config(): array` — cache 12h `mlp_cache_analysis_*`, exportable via `admin-logic.php:710 report_data['cache_analysis']`
+- **Errors (13.4.0):** font única `mlp_analyze_error_patterns(2,200,true)` + `recent_list`; `enhanced` és wrapper; join multilínia, severitat critical/high/medium/low (+alias BC)
 - **Detecta:** WP Rocket (`wp-rocket/wp-rocket.php`), SG (`sg-optimizer/sg-optimizer.php` / `siteground-optimizer/sg-optimizer.php` / `sg-cachepress/sg-cachepress.php` + MU fallback `SiteGround_Optimizer\Options\Options`), LiteSpeed, W3TC, SuperCache, WP Fastest, Autoptimize. Unifica `sg-cachepress` antic + nou com 1 sol.
 - **Issues:** calendari exclòs (`/calendari-de-mogudes/|/mogudes/` → -30), Lifespan 0/10h (-10), doble CDN RocketCDN+SG (-10), Delay/RUCSS (-5), cache_mobile OFF (-5), Memcached OFF (-20), doble page-cache ≥2 (-25)
 - **Recomanació òptima SG+Rocket (cas bcnswing.org):** SG Dynamic ON, File-Based OFF, Memcached ON, Frontend OFF; WP Rocket minify ON, `cdn:0` (usar SG CDN Premium TTL 12h), `cdn_type:""` (residu `rocketcdn` amb `cdn:0` és inactiu), `cache_reject_uri:[]`, `purge_cron_interval:4 HOUR_IN_SECONDS`
@@ -57,6 +58,10 @@ assets/
 - **Export:** `cache_analysis` ja inclòs a JSON/HTML/TXT/CSV — verificar després de cada nou camp
 
 ## Historial recent
+- `13.4.3` — Ajuda actualitzada (errors 2h/200, cache, CSV)
+- `13.4.2` — Crèdits d'autor a la capçalera comuna
+- `13.4.1` — Redacta secrets WP Rocket del cache_analysis
+- `13.4.0` — Errors font única + report amb cache_analysis + TTL 12h + overhead canònic + export whitelist
 - `13.3.6` — Nou `cache-logic.php` + AJAX + tool cache + export; fix doble comptatge SG mu/plugin; cas bcnswing calendari (`cache_reject_uri []`, `lifespan 4h`, `cdn 0`, triple cache → SG Memcached ON/File-Based OFF)
 - `13.3.5` — Fix `avg_mem/avg_time` a tab-statistics
 - `13.3.4` — Fix botó Limpiar Logs & Caché

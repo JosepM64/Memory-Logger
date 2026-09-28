@@ -1,0 +1,12 @@
+# Fitxers exclosos del deploy FTP
+.git/*
+.gitignore
+report.json
+debug.log
+memory-usage.log
+memory-logger-errors.log
+.user.ini
+AGENTS.md
+estructura.txt
+deploy.ps1
+.distignore

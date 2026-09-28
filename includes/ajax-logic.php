@@ -565,9 +565,10 @@ function mlp_ajax_export_diagnostic_report(): void {
         mlp_ajax_require_admin();
         require_once MLP_PATH . 'includes/admin-logic.php';
         $format = sanitize_text_field($_POST['format'] ?? 'json');
+        $format = in_array($format, ['json', 'html', 'txt', 'csv'], true) ? $format : 'json';
         wp_send_json_success([
             'content' => mlp_generate_diagnostic_report($format),
-            'filename' => 'report.' . $format
+            'filename' => 'memory-logger-report.' . $format
         ]);
     });
 }

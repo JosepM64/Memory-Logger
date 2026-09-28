@@ -8,6 +8,7 @@ memory-logger-errors.log
 Thumbs.db
 
 report.json
+memory-logger-report.*
 .htaccess
 
 htaccess

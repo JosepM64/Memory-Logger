@@ -1,7 +1,7 @@
 /memory-logger-pro/
 │
-├── memory-logger.php       # Archivo principal del plugin. Define constantes, carga los includes y registra hooks.
-├── readme.txt              # Documentación del plugin (No generar de momento)
+├── memory-logger.php       # Archivo principal del plugin. Define constantes, carga los includes y registra hooks. (v13.4.3)
+├── readme.txt              # Readme WordPress.org (estable 13.4.3)
 │
 ├── /assets/                # Recursos estáticos (CSS, JS, imágenes)
 │   ├── admin-script.js     # JavaScript para la administración (interactividad, AJAX, gráficos)

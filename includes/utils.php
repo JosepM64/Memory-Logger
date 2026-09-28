@@ -944,6 +944,9 @@ if (!function_exists('mlp_purge_cache')) {
         delete_transient('mlp_system_health_v9');
         delete_transient('mlp_advanced_stats_v7');
         delete_transient('mlp_error_patterns_analysis_' . md5(MLP_PATH));
+        delete_transient('mlp_cache_analysis_' . md5(MLP_PATH));
+        delete_transient('mlp_cached_errors_count');
+        delete_transient('mlp_cached_errors_list');
         delete_transient('mlp_file_integrity_check_' . md5(MLP_PATH));
         delete_transient('mlp_hosting_recommendations_' . md5(MLP_PATH . PHP_VERSION));
         delete_transient('mlp_database_analysis_' . md5(MLP_PATH));

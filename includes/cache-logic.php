@@ -1,9 +1,9 @@
 <?php
 /**
- * Memory Logger Pro v13.3.6 - Cache Logic
+ * Memory Logger Pro v13.4.1 - Cache Logic
  * Anàlisi de configuració de cache: WP Rocket + SG Optimizer + altres
  * @package Memory Logger Pro
- * @version 13.3.6
+ * @version 13.4.1
  */
 
 if (!defined('ABSPATH')) {
@@ -79,6 +79,7 @@ function mlp_analyze_cache_config(): array {
     $has_wpr = isset($detected['wp-rocket/wp-rocket.php']);
     if ($has_wpr) {
         $wpr = get_option('wp_rocket_settings', []);
+        unset($wpr['secret_key'], $wpr['secret_cache_key'], $wpr['consumer_key'], $wpr['consumer_email'], $wpr['license'], $wpr['cloudflare_api_key'], $wpr['cloudflare_zone_id'], $wpr['cloudflare_email'], $wpr['sucury_waf_api_key']);
         $wp_rocket = $wpr;
         $reject = $wpr['cache_reject_uri'] ?? [];
         $cdn = (int)($wpr['cdn'] ?? 0);
@@ -208,6 +209,6 @@ function mlp_analyze_cache_config(): array {
         'generated_at' => current_time('mysql'),
     ];
 
-    set_transient($cache_key, $result, 5 * MINUTE_IN_SECONDS);
+    set_transient($cache_key, $result, 12 * HOUR_IN_SECONDS);
     return $result;
 }

@@ -1,5 +1,22 @@
 Memory Logger Pro - Changelog
 
+## 13.4.3 - 2026-09-28
+- Ajuda actualitzada: finestra errors 2h/200 línies, eina Anàlisi de Cache, export JSON/HTML/TXT/CSV (`tab-dashboard.php:309`)
+
+## 13.4.2 - 2026-09-28
+- Crèdits d'autor entre títol i descripció a la capçalera comuna (3 pestanyes) (`admin-logic.php:325`)
+
+## 13.4.1 - 2026-09-28
+- Fix seguretat: `cache_analysis.wp_rocket` ja no exposa `secret_key/license/consumer_*/cloudflare_*/sucury_*` al report (`cache-logic.php:82`)
+
+## 13.4.0 - 2026-09-28
+- Unifica errors en font única: `mlp_analyze_error_patterns($hours=2,$max_lines=200,$ignore_own=true)` + `recent_list`; `mlp_enhanced_error_detection()` passa a wrapper sense doble I/O (`core-logic.php`)
+- Fix stack-trace partit: join multilínia; missatge sencer (2000ch a recurrent) + severitat `critical/high/medium/low` amb alias BC `warning/notice`
+- Report 1 scan: `mlp_generate_diagnostic_report()` afegeix `cache_analysis` lazy + `generated_utc` + flags `JSON_UNESCAPED_UNICODE`; HTML/TXT/CSV inclouen cache (`admin-logic.php`)
+- Baixa càrrega: cache errors 15min, cache anàlisi 12h (`cache-logic.php`), `mlp_purge_cache()` neteja claus noves (`utils.php`)
+- Fix overhead: dashboard usa `db_overhead_kb` canònic amb fallback legacy (`tab-dashboard.php:50`)
+- Export segur: whitelist `json/html/txt/csv` + filename `memory-logger-report.*` (`ajax-logic.php:562`)
+
 ## 13.3.9 - 2026-09-15
 - Fix permanent banner: exclou `Memory Logger Pro: problemas críticos de base de datos` del `notice` (`admin-logic.php:543`) — només `thrown/warning` externs (TEC)
 

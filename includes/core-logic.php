@@ -678,21 +678,22 @@ function mlp_get_advanced_stats(): array {
  * Patrones de error (Análisis Real de Logs Mejorado)
  * CON CACHÉ y filtro de fecha (últimas 24h)
  */
-function mlp_analyze_error_patterns(): array {
-    $cache_key = 'mlp_error_patterns_analysis_' . md5(MLP_PATH);
+function mlp_analyze_error_patterns(int $hours = 2, int $max_lines = 200, bool $ignore_own = true): array {
+    $cache_key = 'mlp_error_patterns_analysis_' . md5(MLP_PATH . "|$hours|$max_lines|" . ($ignore_own ? '1' : '0'));
     $cached = get_transient($cache_key);
     if ($cached !== false) {
         return $cached;
     }
-    
+
     $patterns = [
         'total_errors' => 0,
         'patterns' => [],
-        'severity_counts' => ['critical' => 0, 'warning' => 0, 'notice' => 0],
+        'severity_counts' => ['critical' => 0, 'high' => 0, 'medium' => 0, 'low' => 0],
         'last_error_date' => 'N/A',
         'error_timeline' => [],
         'recurrent_errors' => [],
-        'error_sources' => []
+        'error_sources' => [],
+        'recent_list' => [],
     ];
 
     // Buscar múltiples posibles ubicaciones de logs
@@ -704,51 +705,79 @@ function mlp_analyze_error_patterns(): array {
     ];
 
     $lines = [];
+    $sources = [];
     foreach ($log_files as $log_file) {
         if ($log_file && file_exists($log_file) && is_readable($log_file)) {
-            $new_lines = mlp_tail_file($log_file, 500);
+            $new_lines = mlp_tail_file($log_file, $max_lines);
             $lines = array_merge($lines, $new_lines);
-            if (count($lines) >= 500) {
-                $lines = array_slice($lines, 0, 500);
+            $sources = array_merge($sources, array_fill(0, count($new_lines), basename((string) $log_file)));
+            if (count($lines) >= $max_lines) {
+                $lines = array_slice($lines, 0, $max_lines);
+                $sources = array_slice($sources, 0, $max_lines);
                 break;
             }
         }
     }
-    
-    // Filtro: solo errores de las últimas 24 horas
-    $twenty_four_hours_ago = time() - 86400;
+
+    // Uneix stack-traces multilínia: línia sense data s'annexa a l'anterior
+    $joined = [];
+    $joined_sources = [];
+    foreach ($lines as $i => $line) {
+        $is_start = (bool) preg_match('/^\[.+?\]/', $line)
+            || (bool) preg_match('/DATE:\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/', $line)
+            || (bool) preg_match('/\[\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2}/', $line);
+        if ($is_start || empty($joined)) {
+            $joined[] = $line;
+            $joined_sources[] = $sources[$i] ?? 'log';
+        } else {
+            $joined[count($joined) - 1] .= "\n" . $line;
+        }
+    }
+
+    // Filtro: solo errores de las últimas $hours horas
+    $cutoff = time() - ($hours * 3600);
     $filtered_lines = [];
-    
-    foreach ($lines as $line) {
+    $filtered_sources = [];
+    foreach ($joined as $i => $line) {
+        if ($ignore_own && str_contains($line, 'memory-logger-pro')) {
+            continue;
+        }
         if (preg_match('/\[(\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2})/', $line, $time_match)) {
             $log_time = strtotime($time_match[1]);
-            if ($log_time && $log_time >= $twenty_four_hours_ago) {
-                $filtered_lines[] = $line;
+            if ($log_time && $log_time < $cutoff) {
+                continue;
             }
-        } else {
-            // Si no tiene fecha, incluirlo (puede ser actual)
-            $filtered_lines[] = $line;
+        } elseif (preg_match('/DATE:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $line, $date_match)) {
+            $log_time = strtotime($date_match[1]);
+            if ($log_time && $log_time < $cutoff) {
+                continue;
+            }
         }
+        $filtered_lines[] = $line;
+        $filtered_sources[] = $joined_sources[$i] ?? 'log';
     }
     $lines = $filtered_lines;
 
     $patterns['total_errors'] = count($lines);
-    
+
     // Cache para errores recurrentes (últimos 7 días)
     $recent_timestamp = time() - (7 * 24 * 60 * 60);
-    
-    foreach ($lines as $line) {
+
+    foreach ($lines as $idx => $line) {
         // Extraer fecha — soporta "[06-Sep-2026 07:52:41 UTC]" y "DATE:2026-01-23 03:00:20"
         $date_match = [];
         $error_date = null;
+        $log_ts = null;
         if (preg_match('/^\[(.*?)\]/', $line, $date_match)) {
             $error_date = $date_match[1];
+            $log_ts = strtotime($error_date) ?: null;
         } elseif (preg_match('/DATE:(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/', $line, $date_match)) {
             $error_date = $date_match[1];
+            $log_ts = strtotime($error_date) ?: null;
         }
         if ($error_date) {
             $patterns['last_error_date'] = $error_date;
-            $day_ts = strtotime($error_date);
+            $day_ts = $log_ts ?: strtotime($error_date);
             if ($day_ts) {
                 $day = date('Y-m-d', $day_ts);
                 if (!isset($patterns['error_timeline'][$day])) {
@@ -756,13 +785,17 @@ function mlp_analyze_error_patterns(): array {
                 }
                 $patterns['error_timeline'][$day]++;
                 if ($day_ts > $recent_timestamp) {
-                    $error_key = md5(substr($line, 0, 200));
+                    $norm = strtolower(preg_replace('/\s+/', ' ', $line));
+                    if (preg_match('/in (.+?) on line (\d+)/i', $line, $loc)) {
+                        $norm = strtolower($loc[1] . ':' . $loc[2]);
+                    }
+                    $error_key = md5($norm);
                     if (!isset($patterns['recurrent_errors'][$error_key])) {
                         $patterns['recurrent_errors'][$error_key] = [
                             'count' => 0,
                             'first_seen' => $error_date,
                             'last_seen' => $error_date,
-                            'sample' => substr($line, 0, 300)
+                            'sample' => mb_substr($line, 0, 2000),
                         ];
                     }
                     $patterns['recurrent_errors'][$error_key]['count']++;
@@ -771,15 +804,42 @@ function mlp_analyze_error_patterns(): array {
             }
         }
 
-        // Detectar tipo de error — ampliado per cobrir "thrown/exception"
-        $line_lower = strtolower($line);
-        if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'thrown') || str_contains($line_lower, 'exception') || str_contains($line_lower, 'critical')) {
-            $patterns['severity_counts']['critical']++;
-        } elseif (str_contains($line_lower, 'warning')) {
-            $patterns['severity_counts']['warning']++;
-        } elseif (str_contains($line_lower, 'notice') || str_contains($line_lower, 'deprecated')) {
-            $patterns['severity_counts']['notice']++;
+        // Severitat unificada critical/high/medium/low (SEVERITY: mana si hi és)
+        $severity = 'low';
+        if (preg_match('/SEVERITY:(critical|high|medium|low)/i', $line, $sev_match)) {
+            $severity = strtolower($sev_match[1]);
+        } else {
+            $line_lower = strtolower($line);
+            if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'thrown') || str_contains($line_lower, 'exception') || str_contains($line_lower, 'critical') || str_contains($line_lower, 'core error')) {
+                $severity = 'critical';
+            } elseif (str_contains($line_lower, 'warning')) {
+                $severity = 'high';
+            } elseif (str_contains($line_lower, 'notice') || str_contains($line_lower, 'deprecated')) {
+                $severity = 'medium';
+            }
         }
+        $patterns['severity_counts'][$severity] = ($patterns['severity_counts'][$severity] ?? 0) + 1;
+
+        // Llista recent unificada (font única per enhanced + report)
+        $message = trim($line);
+        if (preg_match('/PHP (fatal|warning|notice|deprecated|parse error|error):(.+)/is', $line, $matches)) {
+            $message = trim($matches[2]);
+        }
+        $file = null;
+        $err_line = null;
+        if (preg_match('/in (.+?) on line (\d+)/i', $line, $loc)) {
+            $file = $loc[1];
+            $err_line = (int) $loc[2];
+        }
+        $patterns['recent_list'][] = [
+            'severity' => $severity,
+            'message' => $message,
+            'source' => $filtered_sources[$idx] ?? 'log',
+            'timestamp' => $log_ts ?: time(),
+            'date' => $error_date,
+            'file' => $file,
+            'line' => $err_line,
+        ];
 
         // Detectar fuente específica
         if (preg_match('/wp-content\/plugins\/([^\/]+)\//', $line, $matches)) {
@@ -808,15 +868,26 @@ function mlp_analyze_error_patterns(): array {
     usort($patterns['recurrent_errors'], function($a, $b) {
         return $b['count'] <=> $a['count'];
     });
-    
+
     // Limitar a top 10
     $patterns['recurrent_errors'] = array_slice($patterns['recurrent_errors'], 0, 10);
-    
+
+    // Ordenar recent_list per severitat (critical primer) i limitar a 50
+    usort($patterns['recent_list'], function($a, $b) {
+        $order = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
+        return ($order[$a['severity']] ?? 3) <=> ($order[$b['severity']] ?? 3);
+    });
+    $patterns['recent_list'] = array_slice($patterns['recent_list'], 0, 50);
+
     // Ordenar sources por frecuencia
     arsort($patterns['error_sources']);
     arsort($patterns['patterns']);
-    
-    set_transient($cache_key, $patterns, HOUR_IN_SECONDS);
+
+    // BC: claus antigues warning/notice
+    $patterns['severity_counts']['warning'] = $patterns['severity_counts']['high'] ?? 0;
+    $patterns['severity_counts']['notice'] = ($patterns['severity_counts']['medium'] ?? 0) + ($patterns['severity_counts']['low'] ?? 0);
+
+    set_transient($cache_key, $patterns, 15 * MINUTE_IN_SECONDS);
     return $patterns;
 }
 
@@ -1123,88 +1194,24 @@ function mlp_get_load_status(): array {
 }
 
 /**
- * Detección mejorada de errores (IMPLEMENTADA v12.8.0)
- * Analiza múltiples fuentes de logs de errores
- * 
+ * Detección mejorada de errores (v13.4.0: wrapper prim — font única)
+ * Reutilitza mlp_analyze_error_patterns() per evitar doble lectura de logs.
+ *
  * @return array Errores detectados con severidad
  */
 function mlp_enhanced_error_detection(): array {
-    $errors = [];
-    $log_files = [
-        defined('MLP_ERROR_LOG_FILE') ? MLP_ERROR_LOG_FILE : '',
-        ini_get('error_log'),
-        ABSPATH . 'error_log',
-        defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR . '/debug.log' : ''
-    ];
-
-    $two_hours_ago = time() - 7200;
-
-    foreach ($log_files as $log_file) {
-        if (!$log_file || !file_exists($log_file) || !is_readable($log_file)) {
-            continue;
-        }
-
-        $lines = mlp_tail_file($log_file, 200);
-        
-        foreach ($lines as $line) {
-            if (empty(trim($line))) continue;
-            
-            // Ignorar errores antiguos (más de 2 horas)
-            if (preg_match('/\[(\d{2}-[A-Za-z]{3}-\d{4} \d{2}:\d{2}:\d{2})/', $line, $time_match)) {
-                $log_time = strtotime($time_match[1]);
-                if ($log_time && $log_time < $two_hours_ago) {
-                    continue;
-                }
-            }
-            
-            // Ignorar errores del propio plugin memory-logger-pro
-            if (str_contains($line, 'memory-logger-pro')) {
-                continue;
-            }
-            
-            $severity = 'low';
-            // Prioritat: SEVERITY:high del propi MLP (DB) — més fiable que string matching
-            if (preg_match('/SEVERITY:(critical|high|medium|low)/i', $line, $sev_match)) {
-                $sev = strtolower($sev_match[1]);
-                $severity = match($sev) {
-                    'critical' => 'critical',
-                    'high' => 'high',
-                    'medium' => 'medium',
-                    default => 'low',
-                };
-            } else {
-                $line_lower = strtolower($line);
-                if (str_contains($line_lower, 'fatal') || str_contains($line_lower, 'parse error') || str_contains($line_lower, 'core error') || str_contains($line_lower, 'thrown') || str_contains($line_lower, 'exception')) {
-                    $severity = 'critical';
-                } elseif (str_contains($line_lower, 'warning')) {
-                    $severity = 'high';
-                } elseif (str_contains($line_lower, 'notice') || str_contains($line_lower, 'deprecated')) {
-                    $severity = 'medium';
-                }
-            }
-            
-            // Extraer información del error
-            $message = trim($line);
-            if (preg_match('/PHP (fatal|warning|notice|error):(.+)/i', $line, $matches)) {
-                $message = $matches[2] ?? $message;
-            }
-            
-            $errors[] = [
-                'severity' => $severity,
-                'message' => substr($message, 0, 200),
-                'source' => basename($log_file),
-                'timestamp' => time(),
-            ];
-        }
+    if (!function_exists('mlp_analyze_error_patterns')) {
+        return [];
     }
-
-    // Ordenar por severidad
-    usort($errors, function($a, $b) {
-        $severity_order = ['critical' => 0, 'high' => 1, 'medium' => 2, 'low' => 3];
-        return ($severity_order[$a['severity']] ?? 3) <=> ($severity_order[$b['severity']] ?? 3);
-    });
-
-    return array_slice($errors, 0, 50); // Limitar a 50 errores
+    $patterns = mlp_analyze_error_patterns(2, 200, true);
+    $list = $patterns['recent_list'] ?? [];
+    // BC: només claus antigues severity/message/source/timestamp
+    return array_map(fn($e) => [
+        'severity' => $e['severity'],
+        'message' => mb_substr((string) ($e['message'] ?? ''), 0, 2000),
+        'source' => $e['source'] ?? 'log',
+        'timestamp' => $e['timestamp'] ?? time(),
+    ], array_slice($list, 0, 50));
 }
 
 /**

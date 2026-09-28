@@ -323,6 +323,7 @@ function mlp_render_admin_interface(
  */
 function mlp_render_admin_header(): void {
     echo '<h1 style="margin-bottom:5px; font-size:20px;">Memory Logger Pro v' . MLP_VERSION . '</h1>';
+    echo '<p style="margin:0 0 8px 0; font-size:12px;">Autor: Josep Maria Tapia Estaragues · <a href="https://www.posicionamientowebysem.com/" target="_blank" rel="noopener">posicionamientowebysem.com</a></p>';
     echo '<p style="margin-top:0; color:#646970; font-size:12px;">';
     echo 'Auditor de rendimiento PRO universal: Gráficos, Memoria, Tiempo, CPU inteligente, Tamaño mejorado, Diagnóstico & Seguridad avanzado.';
     echo '</p>';
@@ -715,10 +716,17 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
     if (!function_exists('mlp_analyze_wordpress_plugins_unified') && file_exists(MLP_PATH . 'includes/security-logic.php')) {
         require_once MLP_PATH . 'includes/security-logic.php';
     }
+    if (!function_exists('mlp_analyze_cache_config') && file_exists(MLP_PATH . 'includes/cache-logic.php')) {
+        require_once MLP_PATH . 'includes/cache-logic.php';
+    }
+    // Font única d'errors: 1 sol scan reutilitzat (2h/200l per defecte, baixa càrrega)
+    $error_patterns = function_exists('mlp_analyze_error_patterns') ? mlp_analyze_error_patterns(2, 200, true) : [];
+    $error_analysis = array_slice($error_patterns['recent_list'] ?? [], 0, 50);
     $report_data = [
         'meta' => [
             'generated_at' => current_time('mysql'),
-            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.3.6',
+            'generated_utc' => gmdate('c'),
+            'plugin_version' => defined('MLP_VERSION') ? MLP_VERSION : '13.4.2',
             'wordpress_version' => get_bloginfo('version'),
             'php_version' => phpversion(),
             'site_url' => get_site_url(),
@@ -730,18 +738,22 @@ function mlp_generate_diagnostic_report(string $format = 'json'): string {
         'file_integrity' => function_exists('mlp_check_file_integrity') ? mlp_check_file_integrity() : [],
         'database_analysis' => function_exists('mlp_analyze_database') ? mlp_analyze_database() : [],
         'plugins_analysis' => function_exists('mlp_analyze_wordpress_plugins_unified') ? mlp_analyze_wordpress_plugins_unified(['context' => 'quick']) : [],
-        'error_patterns' => function_exists('mlp_analyze_error_patterns') ? mlp_analyze_error_patterns() : [],
+        'error_patterns' => $error_patterns,
         'security_scan' => function_exists('mlp_run_quick_security_scan_optimized') ? mlp_run_quick_security_scan_optimized() : [],
-        'error_analysis' => function_exists('mlp_enhanced_error_detection') ? mlp_enhanced_error_detection() : [],
+        'error_analysis' => $error_analysis,
+        'cache_analysis' => function_exists('mlp_analyze_cache_config') ? mlp_analyze_cache_config() : [],
         'active_plugins' => get_option('active_plugins', [])
     ];
 
+    if (!defined('MLP_JSON_FLAGS')) {
+        define('MLP_JSON_FLAGS', JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    }
     return match ($format) {
-        'json' => json_encode($report_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+        'json' => (string) json_encode($report_data, MLP_JSON_FLAGS),
         'html' => mlp_generate_html_report($report_data),
         'txt' => mlp_generate_text_report($report_data),
         'csv' => mlp_generate_csv_report($report_data),
-        default => json_encode($report_data),
+        default => (string) json_encode($report_data, MLP_JSON_FLAGS),
     };
 }
 
@@ -851,6 +863,16 @@ function mlp_generate_html_report(array $data): string {
                 <?php endif; ?>
             </div>
 
+            <h2>⚡ Cache</h2>
+            <div class="section">
+                <?php if (!empty($data['cache_analysis'])): ?>
+                    <p><strong>Score:</strong> <?php echo (int) ($data['cache_analysis']['score'] ?? 0); ?>/100 (<?php echo esc_html($data['cache_analysis']['score_label'] ?? ''); ?>)</p>
+                    <?php if (!empty($data['cache_analysis']['issues'])): ?>
+                        <ul><?php foreach (array_slice($data['cache_analysis']['issues'],0,10) as $iss): ?><li><?php echo esc_html(is_array($iss) ? ($iss['title'] ?? '') . ': ' . ($iss['desc'] ?? '') : (string) $iss); ?></li><?php endforeach; ?></ul>
+                    <?php endif; ?>
+                <?php endif; ?>
+            </div>
+
             <p style="margin-top: 40px; text-align: center; color: #646970;">
                 Generado por <a href="https://www.posicionamientowebysem.com">Memory Logger Pro v<?php echo $data['meta']['plugin_version']; ?></a>
             </p>
@@ -917,6 +939,13 @@ function mlp_generate_text_report(array $data): string {
     if (!empty($data['error_patterns']['error_sources'])) {
         $content .= "Fuentes: " . implode(', ', array_keys(array_slice($data['error_patterns']['error_sources'],0,5))) . "\n";
     }
+    $content .= "\n--- CACHE ---\n";
+    if (!empty($data['cache_analysis'])) {
+        $content .= "Score: " . ($data['cache_analysis']['score'] ?? 0) . "/100 (" . ($data['cache_analysis']['score_label'] ?? '') . ")\n";
+        foreach (array_slice($data['cache_analysis']['issues'] ?? [],0,10) as $iss) {
+            $content .= "- " . (is_array($iss) ? ($iss['title'] ?? '') . ': ' . ($iss['desc'] ?? '') : (string) $iss) . "\n";
+        }
+    }
     $content .= "\n--- FIN DEL REPORTE ---\n";
     $content .= "Generado por Memory Logger Pro v" . $data['meta']['plugin_version'] . "\n";
     $content .= "https://www.posicionamientowebysem.com\n";
@@ -966,6 +995,10 @@ function mlp_generate_csv_report(array $data): string {
     }
     fputcsv($output, ['Errors', 'count_enhanced', count($data['error_analysis'] ?? [])]);
     fputcsv($output, ['Errors', 'count_patterns', $data['error_patterns']['total_errors'] ?? 0]);
+    if (!empty($data['cache_analysis'])) {
+        fputcsv($output, ['Cache', 'score', $data['cache_analysis']['score'] ?? '']);
+        fputcsv($output, ['Cache', 'label', $data['cache_analysis']['score_label'] ?? '']);
+    }
     rewind($output);
     $content = stream_get_contents($output);
     fclose($output);
